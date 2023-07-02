@@ -1,4 +1,4 @@
-# notepad
+# simple-notepad
 
 A new Flutter project.
 

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Simple Notepad
+Comment=A simple notepad app
+Exec=simple-notepad 
+Icon=${SNAP}/meta/gui/simple-notepad.png
+Terminal=false
+Type=Application
+Categories=Utility;

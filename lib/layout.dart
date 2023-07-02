@@ -18,7 +18,7 @@ class _AppLayoutState extends State<AppLayout> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notepad'),
+        title: const Text('Simple Notepad'),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 20.0),
