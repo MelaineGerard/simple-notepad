@@ -1,7 +1,18 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
 
-class AppLayout extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+
+class AppLayout extends StatefulWidget {
   const AppLayout({super.key});
+
+  @override
+  State<AppLayout> createState() => _AppLayoutState();
+}
+
+class _AppLayoutState extends State<AppLayout> {
+  final textController = TextEditingController();
+  String currentFilePath = '';
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +71,8 @@ class AppLayout extends StatelessWidget {
                       EdgeInsets.symmetric(horizontal: 0, vertical: 0),
                 ),
                 minLines: minLines,
-                maxLines: null, // Pour permettre plusieurs lignes de texte
+                maxLines: null,
+                controller: textController,
               ),
             ],
           );
@@ -84,25 +96,72 @@ class AppLayout extends StatelessWidget {
         _handleSettings();
         break;
       default:
-        print('Unknown value: $value');
+        break;
     }
   }
-  
+
   void _handleSettings() {
-    // TODO: Open settings
+    // Open a new page with settings
+
+    const snackBar = SnackBar(
+      content: Text('Settings not implemented yet'),
+    );
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    }
   }
-  
+
   void _handleSave() {
-    // TODO: Save content into opened file
+    if (currentFilePath.isNotEmpty) {
+      File(currentFilePath).writeAsString(textController.text);
 
+      final snackBar = SnackBar(
+        content: Text('Saved $currentFilePath'),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    } else {
+      _handleSaveAs();
+    }
   }
-  
-  void _handleSaveAs() {
-    // TODO: Save content into a new file
 
+  Future<void> _handleSaveAs() async {
+    String? outputFile = await FilePicker.platform.saveFile(
+      dialogTitle: 'Please select an output file:',
+      fileName: 'my-awesome-file.txt',
+    );
+    if (outputFile != null) {
+      File(outputFile).writeAsString(textController.text);
+      currentFilePath = outputFile;
+
+      final snackBar = SnackBar(
+        content: Text('Saved as $currentFilePath'),
+      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      }
+    }
   }
-  
-  void _handleOpen() {
-    // TODO: Open a file
+
+  Future<void> _handleOpen() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles();
+
+    if (result != null) {
+      String? filePath = result.files.single.path;
+      if (filePath != null) {
+        String fileContent = await File(filePath).readAsString();
+        currentFilePath = filePath;
+
+        textController.text = fileContent;
+
+        final snackBar = SnackBar(
+          content: Text('Opened $filePath'),
+        );
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(snackBar);
+        }
+      }
+    }
   }
 }
