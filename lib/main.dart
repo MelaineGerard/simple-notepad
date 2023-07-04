@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:simple_notepad/layout.dart';
+import 'package:simple_notepad/views/layout.dart';
 import 'package:yaru/yaru.dart';
 
 void main() {
