@@ -69,6 +69,7 @@ class _AppLayoutState extends State<AppLayout> {
                   hintText: 'Write something... ',
                   contentPadding:
                       EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+                  focusedBorder: InputBorder.none,
                 ),
                 minLines: minLines,
                 maxLines: null,
