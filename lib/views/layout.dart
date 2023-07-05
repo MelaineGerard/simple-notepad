@@ -44,6 +44,10 @@ class _AppLayoutState extends State<AppLayout> {
                     value: 'Settings',
                     child: Text('Settings'),
                   ),
+                  PopupMenuItem<String>(
+                    value: 'About',
+                    child: Text('About'),
+                  ),
                 ];
               },
             ),
