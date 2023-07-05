@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:simple_notepad/utils/config.dart';
 
@@ -26,16 +24,18 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     var viewportHeight = widget.constraints.maxHeight;
-    var lineHeight = max(applicationTheme.fontSize, 24);
+    double lineHeight = 1.2;
 
-    var minLines = (viewportHeight / lineHeight).floor();
+    int minLines = (viewportHeight / (applicationTheme.fontSize * lineHeight))
+        .floor()
+        .toInt();
 
     return ListView(
       children: [
         TextField(
           style: TextStyle(
             fontSize: applicationTheme.fontSize,
-            height: lineHeight / applicationTheme.fontSize,
+            height: lineHeight,
           ),
           decoration: InputDecoration(
             hintText: 'Write something... ',
@@ -43,7 +43,12 @@ class _HomePageState extends State<HomePage> {
               fontSize: applicationTheme.fontSize,
             ),
             focusedBorder: InputBorder.none,
-            contentPadding: const EdgeInsets.all(2)
+            contentPadding: const EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 16,
+              bottom: 8,
+            ),
           ),
           minLines: minLines,
           maxLines: null,
