@@ -41,6 +41,10 @@ class _AppLayoutState extends State<AppLayout> {
                     child: Text('Save as'),
                   ),
                   PopupMenuItem<String>(
+                    value: 'Print',
+                    child: Text('Print'),
+                  ),
+                  PopupMenuItem<String>(
                     value: 'Settings',
                     child: Text('Settings'),
                   ),
@@ -56,7 +60,8 @@ class _AppLayoutState extends State<AppLayout> {
       ),
       body: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
-          return HomePage(constraints: constraints, textController: textController);
+          return HomePage(
+              constraints: constraints, textController: textController);
         },
       ),
     );

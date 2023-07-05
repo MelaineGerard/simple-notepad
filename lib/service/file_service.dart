@@ -2,11 +2,15 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 class FileService {
   String currentFilePath = '';
 
-  Future<void> openFile(BuildContext context, TextEditingController textController) async {
+  Future<void> openFile(
+      BuildContext context, TextEditingController textController) async {
     FilePickerResult? result = await FilePicker.platform.pickFiles();
 
     if (result != null) {
@@ -28,7 +32,8 @@ class FileService {
     }
   }
 
-  Future<void> saveFile(BuildContext context, TextEditingController textController) async {
+  Future<void> saveFile(
+      BuildContext context, TextEditingController textController) async {
     if (currentFilePath.isNotEmpty) {
       File(currentFilePath).writeAsString(textController.text);
 
@@ -41,7 +46,8 @@ class FileService {
     }
   }
 
-  Future<void> saveFileAs(BuildContext context, TextEditingController textController) async {
+  Future<void> saveFileAs(
+      BuildContext context, TextEditingController textController) async {
     String? outputFile = await FilePicker.platform.saveFile(
       dialogTitle: 'Please select an output file:',
       fileName: 'my-awesome-file.txt',
@@ -57,5 +63,19 @@ class FileService {
         ScaffoldMessenger.of(context).showSnackBar(snackBar);
       }
     }
+  }
+
+  Future<void> printFile(
+      BuildContext context, TextEditingController textController) async {
+    final doc = pw.Document();
+    doc.addPage(
+      pw.Page(
+        build: (pw.Context context) => pw.Text(textController.text),
+      ),
+    );
+
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => doc.save(),
+    );
   }
 }

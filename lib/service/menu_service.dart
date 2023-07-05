@@ -17,6 +17,9 @@ class MenuService {
       case 'Save as':
         fileService.saveFileAs(context, textController);
         break;
+      case 'Print':
+        fileService.printFile(context, textController);
+        break;
       case 'Settings':
         _handleSettings(context);
         break;
@@ -63,7 +66,6 @@ class MenuService {
                   ),
                 ],
               ),
-              // TODO: Add the font family setting
             ],
           ),
           actions: [
