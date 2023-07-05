@@ -29,23 +29,51 @@ class MenuService {
   }
 
   void _handleSettings(BuildContext context) {
-    // generate a dialog with a switch to toggle the dark mode
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          scrollable: true,
           title: const Text('Settings'),
-          content: Row(
+          content: Column(
             children: [
-              const Text('Dark mode'),
-              Switch(
-                value: applicationTheme.darkMode,
-                onChanged: (value) {
-                  applicationTheme.toggleTheme();
-                },
+              Row(
+                children: [
+                  const Text('Dark mode'),
+                  Switch(
+                    value: applicationTheme.darkMode,
+                    onChanged: (value) async {
+                      await applicationTheme.toggleTheme();
+                    },
+                  ),
+                ],
               ),
+              Row(
+                children: [
+                  const Text('Font size'),
+                  Slider(
+                    value: applicationTheme.fontSize,
+                    min: 12,
+                    max: 32,
+                    divisions: 12,
+                    label: applicationTheme.fontSize.round().toString(),
+                    onChanged: (double value) async {
+                      await applicationTheme.changeFontSize(value);
+                    },
+                  ),
+                ],
+              ),
+              // TODO: Add the font family setting
             ],
           ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Close'),
+            ),
+          ],
         );
       },
     );

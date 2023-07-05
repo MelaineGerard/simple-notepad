@@ -1,6 +1,9 @@
-import 'package:flutter/material.dart';
+import 'dart:math';
 
-class HomePage extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:simple_notepad/utils/config.dart';
+
+class HomePage extends StatefulWidget {
   final BoxConstraints constraints;
   final TextEditingController textController;
 
@@ -8,28 +11,43 @@ class HomePage extends StatelessWidget {
       {super.key, required this.constraints, required this.textController});
 
   @override
-  Widget build(BuildContext context) {
-    final viewportHeight = constraints.maxHeight;
-    const lineHeight = 24.0;
-    const fontSize = 16.0;
+  State<HomePage> createState() => _HomePageState();
+}
 
-    final minLines = (viewportHeight / lineHeight).floor();
-    
+class _HomePageState extends State<HomePage> {
+  @override
+  void initState() {
+    super.initState();
+    applicationTheme.addListener(() {
+      setState(() {});
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    var viewportHeight = widget.constraints.maxHeight;
+    var lineHeight = max(applicationTheme.fontSize, 24);
+
+    var minLines = (viewportHeight / lineHeight).floor();
+
     return ListView(
       children: [
         TextField(
-          style: const TextStyle(
-            fontSize: fontSize,
-            height: lineHeight / fontSize,
+          style: TextStyle(
+            fontSize: applicationTheme.fontSize,
+            height: lineHeight / applicationTheme.fontSize,
           ),
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             hintText: 'Write something... ',
-            contentPadding: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+            hintStyle: TextStyle(
+              fontSize: applicationTheme.fontSize,
+            ),
             focusedBorder: InputBorder.none,
+            contentPadding: const EdgeInsets.all(2)
           ),
           minLines: minLines,
           maxLines: null,
-          controller: textController,
+          controller: widget.textController,
         ),
       ],
     );
