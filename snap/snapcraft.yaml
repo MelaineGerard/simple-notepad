@@ -14,7 +14,7 @@ architectures:
 apps:
   simple-notepad:
     command: simple-notepad
-    extensions: [flutter-master]
+    extensions: [flutter-stable]
 
 parts:
   simple-notepad:
