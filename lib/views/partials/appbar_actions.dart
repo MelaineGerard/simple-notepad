@@ -4,17 +4,18 @@ import 'package:yaru_icons/yaru_icons.dart';
 
 class AppBarActions extends StatelessWidget {
   final MenuService menuService;
-  
+
   final TextEditingController textController;
 
-  const AppBarActions({super.key, required this.textController, required this.menuService});
+  const AppBarActions(
+      {super.key, required this.textController, required this.menuService});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(right: 20.0),
       child: PopupMenuButton<String>(
-        icon: const Icon(YaruIcons.view_more_horizontal),
+        icon: const Icon(YaruIcons.menu),
         onSelected: (value) {
           menuService.handleContextMenu(context, textController, value);
         },
