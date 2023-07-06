@@ -20,10 +20,12 @@ class _AppLayoutState extends State<AppLayout> {
     return Scaffold(
       appBar: YaruWindowTitleBar(
         title: const Text('Simple Notepad'),
-        leading: AppBarActions(
-          textController: textController,
-          menuService: menuService,
-        ),
+        actions: [
+          AppBarActions(
+            textController: textController,
+            menuService: menuService,
+          ),
+        ],
       ),
       body: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
