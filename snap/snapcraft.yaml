@@ -17,6 +17,9 @@ apps:
     extensions: [flutter-stable]
     slots:
       - dbus-simple-notepad
+    plugs:
+      - home
+      - removable-media
 
 parts:
   simple-notepad:
