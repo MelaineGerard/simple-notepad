@@ -15,9 +15,17 @@ apps:
   simple-notepad:
     command: simple-notepad
     extensions: [flutter-stable]
+    slots:
+      - dbus-simple-notepad
 
 parts:
   simple-notepad:
     source: .
     plugin: flutter
     flutter-target: lib/main.dart
+
+slots:
+  dbus-simple-notepad:
+    interface: dbus
+    bus: session
+    name: com.example.simple_notepad
