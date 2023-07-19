@@ -26,6 +26,11 @@ parts:
     source: .
     plugin: flutter
     flutter-target: lib/main.dart
+  zenity-integration:
+    plugin: nil
+    stage-snaps:
+      - zenity-integration
+
 
 slots:
   dbus-simple-notepad:
