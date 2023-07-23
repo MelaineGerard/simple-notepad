@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(runner LANGUAGES CXX)
 
 set(BINARY_NAME "simple-notepad")
-set(APPLICATION_ID "com.example.simple_notepad")
+set(APPLICATION_ID "fr.melaine.gerard.simple_notepad")
 
 cmake_policy(SET CMP0063 NEW)
 
