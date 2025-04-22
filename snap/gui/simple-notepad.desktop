@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=Simple Notepad
-Comment=A simple notepad app
+Comment=A simple, lightweight notepad — like Windows Notepad, but for Linux.
 Exec=simple-notepad 
 Icon=${SNAP}/meta/gui/simple-notepad.png
 Terminal=false

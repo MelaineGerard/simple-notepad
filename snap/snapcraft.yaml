@@ -1,10 +1,10 @@
 name: simple-notepad
-version: 0.1.2
-summary: Simple notepad
-description: A simple notepad app
+version: 0.1.3
+summary: A simple, lightweight notepad — like Windows Notepad, but for Linux.
+description: "**Simple Notepad** is a clean and lightweight text editor for Linux, inspired by the classic Windows Notepad.  \n\nIt’s built for those who want a no-fuss writing environment: perfect for taking notes, editing plain text files, or writing quick thoughts — without the clutter of advanced features.  \n\n✅ **Fast, simple, and easy to use**  \n🧘 **Distraction-free interface**  \n💾 **Basic open/save support for .txt files**  \n🚫 **No syntax highlighting** – just pure plain text  \n\nWhether you're a minimalist, a developer who needs a quick editor, or someone who just wants a Notepad-like experience on Linux — **Simple Notepad** gives you exactly that.\n\nLightweight. Reliable. Familiar."
 
 confinement: strict
-base: core18
+base: core22
 grade: stable
 
 architectures:

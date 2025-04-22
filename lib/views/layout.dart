@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:simple_notepad/service/menu_service.dart';
 import 'package:simple_notepad/views/pages/home.dart';
 import 'package:simple_notepad/views/partials/appbar_actions.dart';
-import 'package:yaru_widgets/yaru_widgets.dart';
+import 'package:yaru/widgets.dart';
 
 class AppLayout extends StatefulWidget {
   const AppLayout({super.key});

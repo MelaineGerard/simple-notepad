@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:simple_notepad/utils/config.dart';
 import 'package:simple_notepad/views/layout.dart';
 import 'package:yaru/yaru.dart';
-import 'package:yaru_widgets/widgets.dart';
 
 Future<void> main() async {
   await YaruWindowTitleBar.ensureInitialized();

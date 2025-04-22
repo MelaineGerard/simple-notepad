@@ -85,8 +85,8 @@ class MenuService {
     showAboutDialog(
       context: context,
       applicationName: 'Simple Notepad',
-      applicationVersion: '0.0.2',
-      applicationLegalese: '© 2023 - Melaine Gérard',
+      applicationVersion: '0.1.3',
+      applicationLegalese: '© 2025 - Melaine Gérard',
       applicationIcon: const Icon(Icons.note),
     );
   }

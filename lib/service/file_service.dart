@@ -68,9 +68,11 @@ class FileService {
   Future<void> printFile(
       BuildContext context, TextEditingController textController) async {
     final doc = pw.Document();
+    final lines = textController.text.split(RegExp(r'\r?\n'));
+
     doc.addPage(
-      pw.Page(
-        build: (pw.Context context) => pw.Text(textController.text),
+      pw.MultiPage(
+        build: (pw.Context context) => lines.map((line) => pw.Paragraph(text: line)).toList(),
       ),
     );
 

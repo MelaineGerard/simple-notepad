@@ -6,7 +6,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   gtk
   handy_window
   printing
-  screen_retriever
+  screen_retriever_linux
   window_manager
   yaru_window_linux
 )

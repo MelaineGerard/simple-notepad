@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:simple_notepad/service/menu_service.dart';
-import 'package:yaru_icons/yaru_icons.dart';
+import 'package:yaru/icons.dart';
 
 class AppBarActions extends StatelessWidget {
   final MenuService menuService;
