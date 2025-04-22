@@ -14,7 +14,7 @@ architectures:
 apps:
   simple-notepad:
     command: simple-notepad
-    extensions: [flutter-stable]
+    extensions: []
     slots:
       - dbus-simple-notepad
     plugs:
