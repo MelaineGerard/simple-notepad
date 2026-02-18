@@ -14,7 +14,7 @@ dependencies:
   handy_window: ^0.4.0
   pdf: ^3.11.3
   printing: ^5.11.0
-  shared_preferences: ^2.2.0
+  shared_preferences: ^2.5.4
   yaru: ^9.0.0
 
 dev_dependencies:
