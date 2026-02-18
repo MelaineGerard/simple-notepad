@@ -15,7 +15,7 @@ dependencies:
   pdf: ^3.11.3
   printing: ^5.11.0
   shared_preferences: ^2.2.0
-  yaru: ^7.0.0
+  yaru: ^9.0.0
 
 dev_dependencies:
   flutter_test:
