@@ -6,9 +6,21 @@ on:
 
 jobs:
   build-and-upload:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: write
+
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            arch: x86_64
+            deb_arch: amd64
+            flutter_arch: x64
+          - runner: ubuntu-24.04-arm
+            arch: aarch64
+            deb_arch: arm64
+            flutter_arch: arm64
 
     steps:
       - uses: actions/checkout@v4
@@ -42,16 +54,16 @@ jobs:
 
       - name: Create tar.gz
         run: |
-          tar -czf "simple-notepad-${{ steps.version.outputs.tag }}-linux-x86_64.tar.gz" \
-            -C build/linux/x64/release bundle
+          tar -czf "simple-notepad-${{ steps.version.outputs.tag }}-linux-${{ matrix.arch }}.tar.gz" \
+            -C build/linux/${{ matrix.flutter_arch }}/release bundle
 
       - name: Create AppImage
         run: |
-          wget -q https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage
-          chmod +x appimagetool-x86_64.AppImage
+          wget -q "https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-${{ matrix.arch }}.AppImage"
+          chmod +x "appimagetool-${{ matrix.arch }}.AppImage"
 
           mkdir AppDir
-          cp -r build/linux/x64/release/bundle/. AppDir/
+          cp -r "build/linux/${{ matrix.flutter_arch }}/release/bundle/." AppDir/
 
           sed 's|Exec=simple-notepad[[:space:]]*|Exec=simple_notepad|' \
             snap/gui/simple-notepad.desktop \
@@ -63,8 +75,8 @@ jobs:
             > AppDir/AppRun
           chmod +x AppDir/AppRun
 
-          ARCH=x86_64 ./appimagetool-x86_64.AppImage --appimage-extract-and-run \
-            AppDir "simple-notepad-${{ steps.version.outputs.tag }}-x86_64.AppImage"
+          ARCH=${{ matrix.arch }} ./"appimagetool-${{ matrix.arch }}.AppImage" --appimage-extract-and-run \
+            AppDir "simple-notepad-${{ steps.version.outputs.tag }}-${{ matrix.arch }}.AppImage"
 
       - name: Prepare packaging files
         run: |
@@ -86,12 +98,12 @@ jobs:
             --category Utility \
             --license MIT \
             --deb-no-default-config-files \
-            "build/linux/x64/release/bundle/=/opt/simple-notepad/" \
+            "build/linux/${{ matrix.flutter_arch }}/release/bundle/=/opt/simple-notepad/" \
             "packaging/simple-notepad=/usr/bin/simple-notepad" \
             "packaging/simple-notepad.desktop=/usr/share/applications/simple-notepad.desktop" \
             "snap/gui/simple-notepad.png=/usr/share/icons/hicolor/256x256/apps/simple-notepad.png"
-          mv "simple-notepad_${{ steps.version.outputs.version }}_amd64.deb" \
-             "simple-notepad-${{ steps.version.outputs.tag }}-amd64.deb"
+          mv "simple-notepad_${{ steps.version.outputs.version }}_${{ matrix.deb_arch }}.deb" \
+             "simple-notepad-${{ steps.version.outputs.tag }}-${{ matrix.deb_arch }}.deb"
 
       - name: Create rpm package
         run: |
@@ -103,18 +115,18 @@ jobs:
             --url "https://github.com/MelaineGerard/simple-notepad" \
             --category Utility \
             --license MIT \
-            "build/linux/x64/release/bundle/=/opt/simple-notepad/" \
+            "build/linux/${{ matrix.flutter_arch }}/release/bundle/=/opt/simple-notepad/" \
             "packaging/simple-notepad=/usr/bin/simple-notepad" \
             "packaging/simple-notepad.desktop=/usr/share/applications/simple-notepad.desktop" \
             "snap/gui/simple-notepad.png=/usr/share/icons/hicolor/256x256/apps/simple-notepad.png"
-          mv "simple-notepad-${{ steps.version.outputs.version }}-1.x86_64.rpm" \
-             "simple-notepad-${{ steps.version.outputs.tag }}-x86_64.rpm"
+          mv "simple-notepad-${{ steps.version.outputs.version }}-1.${{ matrix.arch }}.rpm" \
+             "simple-notepad-${{ steps.version.outputs.tag }}-${{ matrix.arch }}.rpm"
 
       - name: Upload release assets
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            simple-notepad-${{ steps.version.outputs.tag }}-linux-x86_64.tar.gz
-            simple-notepad-${{ steps.version.outputs.tag }}-x86_64.AppImage
-            simple-notepad-${{ steps.version.outputs.tag }}-amd64.deb
-            simple-notepad-${{ steps.version.outputs.tag }}-x86_64.rpm
+            simple-notepad-${{ steps.version.outputs.tag }}-linux-${{ matrix.arch }}.tar.gz
+            simple-notepad-${{ steps.version.outputs.tag }}-${{ matrix.arch }}.AppImage
+            simple-notepad-${{ steps.version.outputs.tag }}-${{ matrix.deb_arch }}.deb
+            simple-notepad-${{ steps.version.outputs.tag }}-${{ matrix.arch }}.rpm
