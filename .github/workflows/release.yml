@@ -11,6 +11,7 @@ jobs:
       contents: write
 
     strategy:
+      fail-fast: false
       matrix:
         include:
           - runner: ubuntu-latest
@@ -41,7 +42,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev ruby ruby-dev
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev ruby ruby-dev libfuse2t64
 
       - name: Install fpm
         run: sudo gem install fpm
@@ -66,7 +67,7 @@ jobs:
 
       - name: Create AppImage
         run: |
-          wget -q "https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-${{ matrix.arch }}.AppImage"
+          wget -q "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-${{ matrix.arch }}.AppImage"
           chmod +x "appimagetool-${{ matrix.arch }}.AppImage"
 
           mkdir AppDir
