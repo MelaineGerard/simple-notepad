@@ -1,26 +1,120 @@
-name: Release Snap Package
+name: Release
 
 on:
   release:
     types: [published]
 
 jobs:
-  snap:
+  build-and-upload:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build snap
-        uses: snapcore/action-build@v1
-        id: build
-
-      - name: Publish snap
-        uses: snapcore/action-publish@v1
-        env:
-          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
-          snap: ${{ steps.build.outputs.snap }}
-          release: stable
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev ruby ruby-dev
+
+      - name: Install fpm
+        run: sudo gem install fpm
+
+      - name: Get Flutter dependencies
+        run: flutter pub get
+
+      - name: Build Linux
+        run: flutter build linux --release
+
+      - name: Set version
+        id: version
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "version=${TAG#v}" >> $GITHUB_OUTPUT
+
+      - name: Create tar.gz
+        run: |
+          tar -czf "simple-notepad-${{ steps.version.outputs.tag }}-linux-x86_64.tar.gz" \
+            -C build/linux/x64/release bundle
+
+      - name: Create AppImage
+        run: |
+          wget -q https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage
+          chmod +x appimagetool-x86_64.AppImage
+
+          mkdir AppDir
+          cp -r build/linux/x64/release/bundle/. AppDir/
+
+          sed 's|Exec=simple-notepad[[:space:]]*|Exec=simple_notepad|' \
+            snap/gui/simple-notepad.desktop \
+            | sed 's|Icon=.*|Icon=simple-notepad|' \
+            > AppDir/simple-notepad.desktop
+          cp snap/gui/simple-notepad.png AppDir/simple-notepad.png
+
+          printf '#!/bin/bash\nHERE="$(dirname "$(readlink -f "${0}")")"\nexec "${HERE}/simple_notepad" "$@"\n' \
+            > AppDir/AppRun
+          chmod +x AppDir/AppRun
+
+          ARCH=x86_64 ./appimagetool-x86_64.AppImage --appimage-extract-and-run \
+            AppDir "simple-notepad-${{ steps.version.outputs.tag }}-x86_64.AppImage"
+
+      - name: Prepare packaging files
+        run: |
+          mkdir -p packaging
+          printf '#!/bin/bash\nexec /opt/simple-notepad/simple_notepad "$@"\n' \
+            > packaging/simple-notepad
+          chmod +x packaging/simple-notepad
+          sed 's|Icon=.*|Icon=simple-notepad|' \
+            snap/gui/simple-notepad.desktop > packaging/simple-notepad.desktop
+
+      - name: Create deb package
+        run: |
+          fpm -s dir -t deb \
+            -n simple-notepad \
+            -v "${{ steps.version.outputs.version }}" \
+            --description "A simple, lightweight notepad for Linux" \
+            --maintainer "Melaine Gerard" \
+            --url "https://github.com/MelaineGerard/simple-notepad" \
+            --category Utility \
+            --license MIT \
+            --deb-no-default-config-files \
+            "build/linux/x64/release/bundle/=/opt/simple-notepad/" \
+            "packaging/simple-notepad=/usr/bin/simple-notepad" \
+            "packaging/simple-notepad.desktop=/usr/share/applications/simple-notepad.desktop" \
+            "snap/gui/simple-notepad.png=/usr/share/icons/hicolor/256x256/apps/simple-notepad.png"
+          mv "simple-notepad_${{ steps.version.outputs.version }}_amd64.deb" \
+             "simple-notepad-${{ steps.version.outputs.tag }}-amd64.deb"
+
+      - name: Create rpm package
+        run: |
+          fpm -s dir -t rpm \
+            -n simple-notepad \
+            -v "${{ steps.version.outputs.version }}" \
+            --description "A simple, lightweight notepad for Linux" \
+            --maintainer "Melaine Gerard" \
+            --url "https://github.com/MelaineGerard/simple-notepad" \
+            --category Utility \
+            --license MIT \
+            "build/linux/x64/release/bundle/=/opt/simple-notepad/" \
+            "packaging/simple-notepad=/usr/bin/simple-notepad" \
+            "packaging/simple-notepad.desktop=/usr/share/applications/simple-notepad.desktop" \
+            "snap/gui/simple-notepad.png=/usr/share/icons/hicolor/256x256/apps/simple-notepad.png"
+          mv "simple-notepad-${{ steps.version.outputs.version }}-1.x86_64.rpm" \
+             "simple-notepad-${{ steps.version.outputs.tag }}-x86_64.rpm"
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            simple-notepad-${{ steps.version.outputs.tag }}-linux-x86_64.tar.gz
+            simple-notepad-${{ steps.version.outputs.tag }}-x86_64.AppImage
+            simple-notepad-${{ steps.version.outputs.tag }}-amd64.deb
+            simple-notepad-${{ steps.version.outputs.tag }}-x86_64.rpm
