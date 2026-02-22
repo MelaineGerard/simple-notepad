@@ -67,7 +67,7 @@ jobs:
 
       - name: Create AppImage
         run: |
-          wget -q "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-${{ matrix.arch }}.AppImage"
+          wget -q "https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-${{ matrix.arch }}.AppImage"
           chmod +x "appimagetool-${{ matrix.arch }}.AppImage"
 
           mkdir AppDir
