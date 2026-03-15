@@ -1,6 +1,39 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended"
+    "config:recommended",
+    ":automergeDisabled",
+    ":dependencyDashboard",
+    ":disableRateLimiting",
+    "docker:pinDigests",
+    ":prConcurrentLimitNone"
+  ],
+  "reviewers": [
+    "MelaineGerard"
+  ],
+  "packageRules": [
+    {
+      "matchManagers": ["pub"],
+      "matchDepTypes": ["dev_dependencies"],
+      "addLabels": ["flutter-dev", "automerge"],
+      "groupName": "flutter-dev",
+      "automerge": true
+    },
+    {
+      "matchManagers": ["pub"],
+      "matchDepTypes": ["dependencies"],
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin", "pinDigest"],
+      "addLabels": ["flutter-minor", "automerge"],
+      "groupName": "php-minor",
+      "automerge": true
+    },
+    {
+      "matchManagers": ["pub"],
+      "matchDepTypes": ["dependencies"],
+      "matchUpdateTypes": ["major"],
+      "addLabels": ["flutter-major"],
+      "groupName": "flutter-major",
+      "automerge": false
+    }
   ]
 }
