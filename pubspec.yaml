@@ -13,9 +13,9 @@ dependencies:
     sdk: flutter
   handy_window: ^0.4.2
   pdf: ^3.11.3
-  printing: ^5.11.0
+  printing: ^5.14.3
   shared_preferences: ^2.5.5
-  yaru: ^10.0.0
+  yaru: ^10.1.0
 
 dev_dependencies:
   flutter_test:
