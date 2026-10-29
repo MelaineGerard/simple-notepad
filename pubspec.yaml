@@ -17,6 +17,10 @@ dependencies:
   shared_preferences: ^2.5.5
   yaru: ^11.0.0
 
+# image 4.11 uses decodeLazy, introduced in archive 4.4.
+dependency_overrides:
+  archive: 4.4.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
