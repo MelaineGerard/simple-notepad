@@ -11,7 +11,7 @@ class FileService {
 
   Future<void> openFile(
       BuildContext context, TextEditingController textController) async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles();
+    FilePickerResult? result = await FilePicker.pickFiles();
 
     if (result != null) {
       String? filePath = result.files.single.path;
@@ -48,7 +48,7 @@ class FileService {
 
   Future<void> saveFileAs(
       BuildContext context, TextEditingController textController) async {
-    String? outputFile = await FilePicker.platform.saveFile(
+    String? outputFile = await FilePicker.saveFile(
       dialogTitle: 'Please select an output file:',
       fileName: 'my-awesome-file.txt',
     );
