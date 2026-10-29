@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -11,10 +13,10 @@ class FileService {
 
   Future<void> openFile(
       BuildContext context, TextEditingController textController) async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles();
+    final result = await FilePicker.pickFile();
 
     if (result != null) {
-      String? filePath = result.files.single.path;
+      String? filePath = result.path;
       if (filePath != null) {
         String fileContent = await File(filePath).readAsString();
         currentFilePath = filePath;
@@ -48,13 +50,14 @@ class FileService {
 
   Future<void> saveFileAs(
       BuildContext context, TextEditingController textController) async {
-    String? outputFile = await FilePicker.platform.saveFile(
+    final outputFile = await FilePicker.saveFile(
       dialogTitle: 'Please select an output file:',
       fileName: 'my-awesome-file.txt',
+      bytes: Uint8List.fromList(utf8.encode(textController.text)),
+      mimeType: 'text/plain',
     );
     if (outputFile != null) {
-      File(outputFile).writeAsString(textController.text);
-      currentFilePath = outputFile;
+      currentFilePath = outputFile.toFilePath();
 
       final snackBar = SnackBar(
         content: Text('Saved as $currentFilePath'),
