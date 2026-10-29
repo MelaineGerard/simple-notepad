@@ -131,7 +131,7 @@ jobs:
              "simple-notepad-${{ steps.version.outputs.tag }}-${{ matrix.arch }}.rpm"
 
       - name: Upload release assets
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             simple-notepad-${{ steps.version.outputs.tag }}-linux-${{ matrix.arch }}.tar.gz
