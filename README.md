@@ -11,6 +11,8 @@ A clean, lightweight plain text editor for Linux — like Notepad, but for Linux
 - Open, save, and save-as any plain text file
 - Print the current document
 - Dark mode toggle (persisted between sessions)
+- Live word, character and line counts
+- System or monospace editor font (persisted between sessions)
 - Adjustable font size (12–32px, persisted between sessions)
 - Minimal UI built with the Yaru (Ubuntu/GNOME) design system
 
