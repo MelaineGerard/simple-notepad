@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart' show TextSelection;
 import 'package:simple_notepad/model/editor_document.dart';
 import 'package:simple_notepad/service/document_store.dart';
 import 'package:simple_notepad/service/text_encoding.dart';
@@ -10,6 +11,8 @@ class DocumentWorkspace extends ChangeNotifier {
   final DocumentStore store;
   final List<EditorDocument> _documents = [];
   int _activeIndex = 0;
+  bool _disposed = false;
+  Set<EditorDocument> _discardOnQuit = {};
 
   DocumentWorkspace({DocumentStore? store}) : store = store ?? LocalDocumentStore() {
     newDocument();
@@ -115,23 +118,130 @@ class DocumentWorkspace extends ChangeNotifier {
 
   Future<bool> canQuit(ConfirmUnsaved confirm,
       {Future<bool> Function(EditorDocument)? saveDocument}) async {
+    _discardOnQuit = {};
+    final discarded = <EditorDocument>{};
     final documents = List<EditorDocument>.of(_documents);
     final approved = <EditorDocument, int>{};
     for (final document in documents) {
-      if (!await canClose(document, confirm, saveDocument: saveDocument)) return false;
+      if (!await canClose(document, (document) async {
+        final choice = await confirm(document);
+        if (choice == UnsavedChoice.discard) discarded.add(document);
+        return choice;
+      }, saveDocument: saveDocument)) { return false; }
       approved[document] = document.revision;
     }
     // Earlier tabs may have changed while a later file was being saved.
-    return listEquals(documents, _documents) &&
+    final approvedAll = listEquals(documents, _documents) &&
         approved.entries.every((entry) => entry.key.revision == entry.value);
+    if (approvedAll) _discardOnQuit = discarded;
+    return approvedAll;
   }
 
-  @override
-  void dispose() {
+  Map<String, dynamic> exportSession({bool quitting = false}) {
+    final included = _documents.where((document) =>
+        !(quitting && _discardOnQuit.contains(document) && document.path == null)).toList();
+    return {
+      'version': 1,
+      'active': included.indexOf(active).clamp(0, included.length).toInt(),
+      'documents': [
+        for (final document in included)
+          {
+            'path': document.path,
+            'encoding': quitting && _discardOnQuit.contains(document)
+                ? document.savedEncoding.name : document.encoding.name,
+            'diskEncoding': document.savedEncoding.name,
+            if (document.isDirty && !(quitting && _discardOnQuit.contains(document)))
+              'draft': document.textController.text,
+            'base': document.textController.selection.baseOffset,
+            'extent': document.textController.selection.extentOffset,
+          },
+      ],
+    };
+  }
+
+  Future<List<String>> restoreSession(Map<String, dynamic> snapshot) async {
+    final warnings = <String>[];
+    if (_disposed) return warnings;
+    if (_documents.length != 1 || active.path != null || active.isDirty ||
+        active.textController.text.isNotEmpty) {
+      return ['The saved session was not restored because editing has already started.'];
+    }
+    if (snapshot['version'] != 1 || snapshot['documents'] is! List) {
+      return ['The saved session has an unsupported format.'];
+    }
+    final initial = List<EditorDocument>.of(_documents);
+    final initialRevision = active.revision;
+    final restored = <EditorDocument>[];
+    final originalIndices = <int>[];
+    final records = snapshot['documents'] as List;
+    for (var index = 0; index < records.length; index++) {
+      final record = records[index];
+      if (record is! Map || record['path'] != null && record['path'] is! String) {
+        warnings.add('An invalid saved tab was skipped.');
+        continue;
+      }
+      TextEncoding parseEncoding(dynamic name) => TextEncoding.values.firstWhere(
+        (encoding) => encoding.name == name,
+        orElse: () => TextEncoding.utf8,
+      );
+      final path = record['path'] as String?;
+      final encoding = parseEncoding(record['encoding']);
+      final diskEncoding = parseEncoding(record['diskEncoding']);
+      final draft = record['draft'] is String ? record['draft'] as String : null;
+      EditorDocument document;
+      var missing = false;
+      if (path != null) {
+        try {
+          final bytes = await store.read(path);
+          document = EditorDocument(
+            text: diskEncoding.decode(bytes), path: path, encoding: diskEncoding,
+          );
+        } catch (_) {
+          warnings.add('Could not reopen $path.');
+          if (draft == null) continue;
+          document = EditorDocument();
+          missing = true;
+        }
+      } else { document = EditorDocument(); }
+      document.encoding = encoding;
+      if (draft != null) document.textController.text = draft;
+      if (missing) document.markExternalChange();
+      final length = document.textController.text.length;
+      final base = record['base'] is int ? record['base'] as int : 0;
+      final extent = record['extent'] is int ? record['extent'] as int : 0;
+      document.textController.selection = TextSelection(
+        baseOffset: base.clamp(0, length).toInt(),
+        extentOffset: extent.clamp(0, length).toInt(),
+      );
+      restored.add(document);
+      originalIndices.add(index);
+    }
+    if (_disposed || !listEquals(initial, _documents) || active.revision != initialRevision) {
+      for (final document in restored) { document.dispose(); }
+      return ['The saved session was not restored because editing has already started.'];
+    }
+    if (restored.isEmpty) return warnings;
     for (final document in _documents) {
       document.removeListener(notifyListeners);
       document.dispose();
     }
+    _documents.clear();
+    for (final document in restored) { _attach(document); }
+    final savedActive = snapshot['active'];
+    final activeIndex = originalIndices.indexOf(savedActive is int ? savedActive : 0);
+    _activeIndex = activeIndex < 0 ? 0 : activeIndex;
+    notifyListeners();
+    return warnings;
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    for (final document in _documents) {
+      document.removeListener(notifyListeners);
+      document.dispose();
+    }
+    _documents.clear();
     super.dispose();
   }
 }

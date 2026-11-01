@@ -26,6 +26,7 @@ class EditorDocument extends ChangeNotifier {
   String get name => path == null ? 'Untitled' : path!.split(RegExp(r'[/\\]')).last;
   bool get isDirty => _externalChange || textController.text != _savedText || _encoding != _savedEncoding;
   TextEncoding get encoding => _encoding;
+  TextEncoding get savedEncoding => _savedEncoding;
   set encoding(TextEncoding value) {
     if (_encoding == value) return;
     _encoding = value;

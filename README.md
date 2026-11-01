@@ -13,6 +13,7 @@ A clean, lightweight plain text editor for Linux — like Notepad, but for Linux
 - UTF-8, UTF-16 LE/BE, ISO-8859-1 and ASCII encodings; BOM detection on open
 - Find and replace in the active tab, including match-case and replace-all
 - Basic syntax highlighting for Python, JavaScript/TypeScript, JSON, YAML, Markdown and Dart (disable in Settings)
+- Restore tabs, active document and cursor positions on startup, including recoverable unsaved drafts
 - Print the current document
 - Dark mode toggle (persisted between sessions)
 - Live word, character and line counts
@@ -24,6 +25,18 @@ A clean, lightweight plain text editor for Linux — like Notepad, but for Linux
 
 Syntax coloring falls back to plain text above 200,000 UTF-16 code units to keep
 large documents responsive. Disabling coloring skips tokenization entirely.
+
+## Session recovery
+
+Session recovery is enabled by default and can be disabled in Settings. It stores
+local recovery data after edits and flushes the final session before quitting.
+Existing files are reopened from disk; unsaved drafts are reapplied without
+writing to those files. Missing files produce a warning, and their drafts become
+unsaved tabs. Discarding a document explicitly removes its recovery draft.
+Unrestorable recovery data is backed up separately before any replacement. If that
+backup fails, recovery saving pauses and leaves the original data untouched.
+Disabling recovery clears the stored session and its backups. Undo history is session-local and
+starts fresh after restarting the app.
 
 ## Keyboard shortcuts
 
