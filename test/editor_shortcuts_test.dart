@@ -46,7 +46,7 @@ void main() {
     controller.selection = const TextSelection(baseOffset: 5, extentOffset: 9);
     await shortcut(tester, LogicalKeyboardKey.f11);
     expect(find.byType(EditorStatusBar), findsNothing);
-    expect(find.text('Simple Notepad'), findsNothing);
+    expect(find.textContaining('— Simple Notepad'), findsNothing);
     expect(controller.text, 'Keep this document');
     expect(controller.selection, const TextSelection(baseOffset: 5, extentOffset: 9));
     await shortcut(tester, LogicalKeyboardKey.escape);

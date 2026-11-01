@@ -9,6 +9,7 @@ class HomePage extends StatelessWidget {
   final TextEditingController textController;
   final UndoHistoryController? undoController;
   final FocusNode? focusNode;
+  final bool autofocus;
 
   const HomePage({
     super.key,
@@ -16,6 +17,7 @@ class HomePage extends StatelessWidget {
     required this.textController,
     this.undoController,
     this.focusNode,
+    this.autofocus = true,
   });
 
   @override
@@ -35,7 +37,7 @@ class HomePage extends StatelessWidget {
             TextField(
               undoController: undoController,
               focusNode: focusNode,
-              autofocus: true,
+              autofocus: autofocus,
               style: TextStyle(
                 fontSize: applicationTheme.fontSize,
                 fontFamily: applicationTheme.editorFont.family,
