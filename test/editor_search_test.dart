@@ -69,7 +69,7 @@ void main() {
   });
 
   test('unterminated block comments consume the tail once and large files fall back', () {
-    final source = '/*' * 20000;
+    final source = '/* ' * 20000;
     final tokens = SyntaxTokens.parse(source, 'javascript');
     expect(tokens.length, 1);
     expect(tokens.single.start, 0);
