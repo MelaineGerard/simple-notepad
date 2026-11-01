@@ -11,6 +11,8 @@ A clean, lightweight plain text editor for Linux — like Notepad, but for Linux
 - Open, save, and save-as plain text files in independent tabs
 - Unsaved-change indicators and Save / Discard / Cancel prompts for tab and window closing
 - UTF-8, UTF-16 LE/BE, ISO-8859-1 and ASCII encodings; BOM detection on open
+- Find and replace in the active tab, including match-case and replace-all
+- Basic syntax highlighting for Python, JavaScript/TypeScript, JSON, YAML, Markdown and Dart (disable in Settings)
 - Print the current document
 - Dark mode toggle (persisted between sessions)
 - Live word, character and line counts
@@ -31,6 +33,9 @@ A clean, lightweight plain text editor for Linux — like Notepad, but for Linux
 | Save | Ctrl+S |
 | Save as | Ctrl+Shift+S |
 | Print | Ctrl+P |
+| Find | Ctrl+F |
+| Find and replace | Ctrl+H |
+| Close search | Escape |
 | Undo | Ctrl+Z |
 | Redo | Ctrl+Y or Ctrl+Shift+Z |
 | Toggle focus mode | F11 or Ctrl+Shift+F |

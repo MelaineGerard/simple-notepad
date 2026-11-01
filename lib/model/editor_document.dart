@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:simple_notepad/service/text_encoding.dart';
+import 'package:simple_notepad/utils/editor_text_controller.dart';
 
 class EditorDocument extends ChangeNotifier {
   static int _nextId = 0;
   final int id = _nextId++;
-  final TextEditingController textController;
+  final EditorTextController textController;
   final UndoHistoryController undoController = UndoHistoryController();
   final FocusNode focusNode = FocusNode();
   String? path;
@@ -16,7 +17,7 @@ class EditorDocument extends ChangeNotifier {
   TextEncoding _savedEncoding;
 
   EditorDocument({String text = '', this.path, TextEncoding encoding = TextEncoding.utf8})
-      : textController = TextEditingController(text: text),
+      : textController = EditorTextController(text: text, path: path),
         _encoding = encoding, _savedText = text, _savedEncoding = encoding {
     _lastText = text;
     textController.addListener(_textChanged);
@@ -38,6 +39,7 @@ class EditorDocument extends ChangeNotifier {
     _savedText = savedText;
     _savedEncoding = savedEncoding;
     path = savedPath;
+    textController.filePath = savedPath;
     notifyListeners();
   }
 

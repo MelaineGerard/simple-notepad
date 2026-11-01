@@ -34,6 +34,8 @@ class AppBarActions extends StatelessWidget {
             _item('Save as', 'Ctrl+Shift+S'),
             _item('Close tab', 'Ctrl+W'),
             _item('Print', 'Ctrl+P'),
+            _item('Find', 'Ctrl+F'),
+            _item('Find & Replace', 'Ctrl+H'),
             const PopupMenuDivider(),
             _item('Undo', 'Ctrl+Z', enabled: history.canUndo),
             _item('Redo', 'Ctrl+Y', enabled: history.canRedo),

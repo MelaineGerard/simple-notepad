@@ -7,6 +7,7 @@ import 'package:simple_notepad/service/text_encoding.dart';
 import 'package:simple_notepad/views/pages/home.dart';
 import 'package:simple_notepad/views/partials/appbar_actions.dart';
 import 'package:simple_notepad/views/partials/editor_status_bar.dart';
+import 'package:simple_notepad/views/partials/find_replace_bar.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:yaru/widgets.dart';
 
@@ -24,6 +25,12 @@ class AppLayout extends StatefulWidget {
 class _AppLayoutState extends State<AppLayout> with WindowListener {
   late final DocumentWorkspace workspace = widget.workspace ?? DocumentWorkspace();
   late final MenuService menuService = widget.menuService ?? MenuService();
+  final _findController = TextEditingController();
+  final _replaceController = TextEditingController();
+  final _findFocus = FocusNode();
+  bool _showFind = false;
+  bool _showReplace = false;
+  bool _matchCase = false;
   bool _focusMode = false;
   bool _busy = false;
   bool _closing = false;
@@ -47,8 +54,35 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
 
   void _toggleFocusMode() {
     if (_closing) return;
+    if (!_focusMode) _closeFind();
     setState(() => _focusMode = !_focusMode);
     _focusEditor();
+  }
+
+  void _syncSearch() {
+    workspace.active.textController.search(
+      _showFind ? _findController.text : '', caseSensitive: _matchCase,
+    );
+  }
+
+  void _openFind(bool replace) {
+    if (_closing) return;
+    setState(() { _showFind = true; _showReplace = replace; _focusMode = false; });
+    _syncSearch();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _findFocus.requestFocus();
+    });
+  }
+
+  void _closeFind() {
+    setState(() => _showFind = false);
+    for (final document in workspace.documents) { document.textController.search(''); }
+    _focusEditor();
+  }
+
+  void _escape() {
+    if (_showFind) _closeFind();
+    else if (_focusMode) _toggleFocusMode();
   }
 
   Future<void> _run(Future<void> Function() operation) async {
@@ -69,6 +103,7 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
       }
     } finally {
       _busy = false;
+      if (mounted) _syncSearch();
       _focusEditor();
     }
   }
@@ -161,6 +196,12 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
 
   void _command(String command) {
     if (_closing) return;
+    if (command == 'Find') { _openFind(false); return; }
+    if (command == 'Find & Replace') { _openFind(true); return; }
+    if (command == 'Settings' || command == 'About') {
+      menuService.handleContextMenu(context, workspace.active.textController, command);
+      return;
+    }
     if (command == 'Focus mode') { _toggleFocusMode(); return; }
     if (command == 'Undo') { workspace.active.undoController.undo(); _focusEditor(); return; }
     if (command == 'Redo') { workspace.active.undoController.redo(); _focusEditor(); return; }
@@ -214,6 +255,9 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
 
   @override
   void dispose() {
+    _findController.dispose();
+    _replaceController.dispose();
+    _findFocus.dispose();
     windowManager.removeListener(this);
     workspace.removeListener(_changed);
     if (widget.workspace == null) workspace.dispose();
@@ -227,7 +271,9 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
       bindings: {
         const SingleActivator(LogicalKeyboardKey.f11): _toggleFocusMode,
         const SingleActivator(LogicalKeyboardKey.keyF, control: true, shift: true): _toggleFocusMode,
-        if (_focusMode) const SingleActivator(LogicalKeyboardKey.escape): _toggleFocusMode,
+        if (_focusMode || _showFind) const SingleActivator(LogicalKeyboardKey.escape): _escape,
+        const SingleActivator(LogicalKeyboardKey.keyF, control: true): () => _command('Find'),
+        const SingleActivator(LogicalKeyboardKey.keyH, control: true): () => _command('Find & Replace'),
         const SingleActivator(LogicalKeyboardKey.keyN, control: true): () => _command('New'),
         const SingleActivator(LogicalKeyboardKey.keyT, control: true): () => _command('New'),
         const SingleActivator(LogicalKeyboardKey.keyW, control: true): () => _command('Close tab'),
@@ -281,7 +327,7 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
                       label: Text('${workspace.documents[i].isDirty ? '• ' : ''}${workspace.documents[i].name}'),
                       tooltip: workspace.documents[i].path ?? 'Unsaved document',
                       selected: i == workspace.activeIndex,
-                      onPressed: () { workspace.select(i); _focusEditor(); },
+                      onPressed: () { workspace.select(i); _syncSearch(); _focusEditor(); },
                       onDeleted: () {
                         final document = workspace.documents[i];
                         _run(() async { await workspace.close(document, _confirm, saveDocument: _saveDocument); });
@@ -291,6 +337,15 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
                   ),
                 IconButton(tooltip: 'New tab (Ctrl+T)', onPressed: () => _command('New'), icon: const Icon(Icons.add)),
               ]),
+            ),
+          if (_showFind)
+            FindReplaceBar(
+              document: active.textController,
+              findController: _findController, replaceController: _replaceController,
+              findFocus: _findFocus, showReplace: _showReplace, caseSensitive: _matchCase,
+              onQueryChanged: (_) => _syncSearch(),
+              onCaseChanged: (value) { setState(() => _matchCase = value); _syncSearch(); },
+              onClose: _closeFind,
             ),
           Expanded(
             key: const ValueKey('editor'),
