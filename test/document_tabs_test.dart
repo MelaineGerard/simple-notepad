@@ -49,6 +49,26 @@ void main() {
     workspace.dispose();
   }, timeout: const Timeout(Duration(seconds: 30)));
 
+  testWidgets('mouse tab close uses the filename dialog and respects Save As cancel',
+      (tester) async {
+    final workspace = DocumentWorkspace(store: MemoryStore());
+    await tester.pumpWidget(MaterialApp(home: AppLayout(workspace: workspace)));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'draft');
+    await tester.tap(find.byTooltip('Close Untitled'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(find.text('File name'), findsOneWidget);
+    expect(find.text('Choose folder'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(workspace.active.textController.text, 'draft');
+    expect(workspace.active.isDirty, isTrue);
+    await tester.pumpWidget(const SizedBox());
+    workspace.dispose();
+  }, timeout: const Timeout(Duration(seconds: 30)));
+
   testWidgets('Ctrl+Q uses unsaved confirmation before invoking window destruction',
       (tester) async {
     final workspace = DocumentWorkspace(store: MemoryStore());

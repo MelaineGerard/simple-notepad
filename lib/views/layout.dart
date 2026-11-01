@@ -284,7 +284,7 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
                       onPressed: () { workspace.select(i); _focusEditor(); },
                       onDeleted: () {
                         final document = workspace.documents[i];
-                        _run(() async { await workspace.close(document, _confirm); });
+                        _run(() async { await workspace.close(document, _confirm, saveDocument: _saveDocument); });
                       },
                       deleteButtonTooltipMessage: 'Close ${workspace.documents[i].name}',
                     ),
