@@ -57,7 +57,7 @@ void main() {
     await tester.pump();
     expect(find.byType(EditorStatusBar), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
-  });
+  }, timeout: const Timeout(Duration(seconds: 20)));
 
   testWidgets('file shortcuts dispatch distinct commands without editing text',
       (tester) async {
@@ -73,7 +73,7 @@ void main() {
     expect(tester.widget<TextField>(find.byType(TextField)).controller!.text,
         'unchanged');
     await tester.pumpWidget(const SizedBox());
-  });
+  }, timeout: const Timeout(Duration(seconds: 20)));
 
   testWidgets('undo redo survives mode and font changes; edits clear redo',
       (tester) async {
@@ -107,5 +107,5 @@ void main() {
     );
     expect(redo.enabled, isFalse);
     await tester.pumpWidget(const SizedBox());
-  });
+  }, timeout: const Timeout(Duration(seconds: 20)));
 }
