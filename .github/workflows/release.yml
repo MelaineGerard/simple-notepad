@@ -88,6 +88,9 @@ jobs:
           set -e
           cat native-startup.log
           test "$STATUS" -eq 124
+          if grep -E 'Unhandled [Ee]xception|EXCEPTION CAUGHT BY' native-startup.log; then
+            exit 1
+          fi
 
       - name: Create tar.gz
         run: |
