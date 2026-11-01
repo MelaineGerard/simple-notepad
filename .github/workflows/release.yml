@@ -164,7 +164,7 @@ jobs:
 
       - name: Stage release packages
         if: github.event_name == 'push'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: packages-${{ matrix.arch }}
           if-no-files-found: error
@@ -185,7 +185,7 @@ jobs:
       - name: Read version
         id: version
         run: echo "tag=${GITHUB_REF_NAME#release/}" >> "$GITHUB_OUTPUT"
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: packages-*
           path: release-packages
