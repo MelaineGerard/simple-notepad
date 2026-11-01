@@ -22,6 +22,7 @@
 - Focus-mode and font changes retain document text, selection and undo history.
 
 ### Build and packaging
+- DEB/RPM packages declare GTK and GNOME desktop schema dependencies. AppImage/tar.gz users need GTK 3 and `gsettings-desktop-schemas` installed on the host.
 - Linux x86_64 and ARM64 packages: AppImage, deb, rpm and tar.gz.
 - Correct package launchers to execute the actual `simple-notepad` binary.
 - Validate the bundle executable and perform a headless native startup smoke test before packaging and publication.
