@@ -91,7 +91,7 @@ Pre-built binaries are available on the [Releases page](https://github.com/Melai
 
 **Prerequisites**
 
-- [Flutter SDK](https://docs.flutter.dev/get-started/install/linux) (stable channel, >=3.27.1)
+- [Flutter SDK](https://docs.flutter.dev/get-started/install/linux) (stable channel, >=3.47.0)
 - Linux build dependencies:
 
 ```bash

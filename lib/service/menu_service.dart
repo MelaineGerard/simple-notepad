@@ -43,7 +43,7 @@ class MenuService {
     showAboutDialog(
       context: context,
       applicationName: 'Simple Notepad',
-      applicationVersion: '0.2.0',
+      applicationVersion: '0.3.0',
       applicationLegalese: '© 2026 - Melaine Gérard',
       applicationIcon: const Icon(Icons.note),
     );
