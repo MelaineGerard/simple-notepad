@@ -85,7 +85,9 @@ void main() {
     await tester.enterText(field, 'one two');
     await tester.pump(const Duration(milliseconds: 600));
     await shortcut(tester, LogicalKeyboardKey.f11);
-    await applicationTheme.changeEditorFont(EditorFont.monospace);
+    await tester.runAsync(
+      () => applicationTheme.changeEditorFont(EditorFont.monospace),
+    );
     await tester.pump();
     await shortcut(tester, LogicalKeyboardKey.keyZ, control: true);
     expect(tester.widget<TextField>(field).controller!.text, 'one');
