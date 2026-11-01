@@ -22,6 +22,9 @@ A clean, lightweight plain text editor for Linux — like Notepad, but for Linux
 - Undo/redo history with menu actions and keyboard shortcuts
 - Minimal UI built with the Yaru (Ubuntu/GNOME) design system
 
+Syntax coloring falls back to plain text above 200,000 UTF-16 code units to keep
+large documents responsive. Disabling coloring skips tokenization entirely.
+
 ## Keyboard shortcuts
 
 | Action | Shortcut |

@@ -68,6 +68,15 @@ void main() {
     }
   });
 
+  test('unterminated block comments consume the tail once and large files fall back', () {
+    final source = '/*' * 20000;
+    final tokens = SyntaxTokens.parse(source, 'javascript');
+    expect(tokens.length, 1);
+    expect(tokens.single.start, 0);
+    expect(tokens.single.end, source.length);
+    expect(SyntaxTokens.parse('x' * (SyntaxTokens.maxHighlightCharacters + 1), 'python'), isEmpty);
+  });
+
   test('syntax preference persists across application settings instances', () async {
     SharedPreferences.setMockInitialValues({});
     final settings = ApplicationTheme();

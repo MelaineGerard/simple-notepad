@@ -81,8 +81,8 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
   }
 
   void _escape() {
-    if (_showFind) _closeFind();
-    else if (_focusMode) _toggleFocusMode();
+    if (_showFind) { _closeFind(); }
+    else if (_focusMode) { _toggleFocusMode(); }
   }
 
   Future<void> _run(Future<void> Function() operation) async {

@@ -5,6 +5,7 @@ import 'package:simple_notepad/utils/syntax_tokens.dart';
 class EditorTextController extends TextEditingController {
   EditorTextController({super.text, String? path}) : _path = path;
 
+  VoidCallback? revealSelection;
   String? _path;
   String _query = '';
   bool _caseSensitive = false;
@@ -49,6 +50,7 @@ class EditorTextController extends TextEditingController {
         : found.indexWhere((range) => range.start >= offset);
     if (index < 0) index = backwards ? found.length - 1 : 0;
     selection = TextSelection(baseOffset: found[index].start, extentOffset: found[index].end);
+    revealSelection?.call();
   }
 
   bool replaceOne(String replacement) {
@@ -60,6 +62,7 @@ class EditorTextController extends TextEditingController {
       text: text.replaceRange(start, end, replacement),
       selection: TextSelection.collapsed(offset: start + replacement.length),
     );
+    revealSelection?.call();
     return true;
   }
 
@@ -88,12 +91,13 @@ class EditorTextController extends TextEditingController {
     }
     final scheme = Theme.of(context).colorScheme;
     final language = this.language;
-    if (_tokenText != text || _tokenLanguage != language) {
+    final syntaxEnabled = applicationTheme.syntaxHighlighting;
+    if (syntaxEnabled && (_tokenText != text || _tokenLanguage != language)) {
       _tokenText = text;
       _tokenLanguage = language;
       _tokens = SyntaxTokens.parse(text, language);
     }
-    final tokens = applicationTheme.syntaxHighlighting ? _tokens : <SyntaxToken>[];
+    final tokens = syntaxEnabled ? _tokens : <SyntaxToken>[];
     final found = matches;
     final boundaries = <int>{0, text.length,
       for (final token in tokens) ...[token.start, token.end],

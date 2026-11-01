@@ -47,6 +47,39 @@ void main() {
     workspace.dispose();
   }, timeout: const Timeout(Duration(seconds: 30)));
 
+  testWidgets('finding an offscreen match reveals it without taking search focus',
+      (tester) async {
+    final workspace = DocumentWorkspace(store: MemoryStore());
+    final document = workspace.active;
+    document.textController.value = TextEditingValue(
+      text: '${List.filled(300, 'ordinary line').join('\n')}\nneedle',
+      selection: const TextSelection.collapsed(offset: 0),
+    );
+    await tester.pumpWidget(MaterialApp(home: AppLayout(workspace: workspace)));
+    await tester.pumpAndSettle();
+    final editor = tester.widget<TextField>(find.byType(TextField));
+    expect(editor.scrollController!.offset, 0);
+    await key(tester, LogicalKeyboardKey.keyF);
+    final query = find.byKey(const ValueKey('find-query'));
+    await tester.enterText(query, 'needle');
+    await tester.pump();
+    final findFocus = tester.widget<TextField>(query).focusNode!;
+    document.textController.selectMatch();
+    await tester.pumpAndSettle();
+    expect(findFocus.hasFocus, isTrue);
+    expect(editor.scrollController!.offset, greaterThan(0));
+    final editable = tester.state<EditableTextState>(
+      find.descendant(of: find.byKey(editor.key!), matching: find.byType(EditableText)),
+    );
+    final caret = editable.renderEditable.getLocalRectForCaret(
+      TextPosition(offset: document.textController.selection.extentOffset),
+    );
+    expect(caret.top, greaterThanOrEqualTo(0));
+    expect(caret.bottom, lessThanOrEqualTo(editable.renderEditable.size.height));
+    await tester.pumpWidget(const SizedBox());
+    workspace.dispose();
+  }, timeout: const Timeout(Duration(seconds: 30)));
+
   testWidgets('Ctrl+F exposes find without replacement fields', (tester) async {
     final workspace = DocumentWorkspace(store: MemoryStore());
     await tester.pumpWidget(MaterialApp(home: AppLayout(workspace: workspace)));
