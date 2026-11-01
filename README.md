@@ -14,7 +14,30 @@ A clean, lightweight plain text editor for Linux — like Notepad, but for Linux
 - Live word, character and line counts
 - System or monospace editor font (persisted between sessions)
 - Adjustable font size (12–32px, persisted between sessions)
+- Distraction-free focus mode, with keyboard and mouse exit controls
+- Undo/redo history with menu actions and keyboard shortcuts
 - Minimal UI built with the Yaru (Ubuntu/GNOME) design system
+
+## Keyboard shortcuts
+
+| Action | Shortcut |
+|---|---|
+| Open file | Ctrl+O |
+| Save | Ctrl+S |
+| Save as | Ctrl+Shift+S |
+| Print | Ctrl+P |
+| Undo | Ctrl+Z |
+| Redo | Ctrl+Y or Ctrl+Shift+Z |
+| Toggle focus mode | F11 or Ctrl+Shift+F |
+| Exit focus mode | Escape |
+
+Focus mode hides the title/menu and status bars. The exit button remains available
+for mouse users. Switching modes or changing font preferences keeps the text,
+selection and undo history. Undo groups consecutive typing into native Flutter
+history entries; editing after undo clears the redo branch.
+
+New-file, search, tab and quit shortcuts will be added with their corresponding
+features.
 
 ## Installation
 

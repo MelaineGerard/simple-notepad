@@ -7,11 +7,15 @@ import 'package:simple_notepad/utils/theme.dart';
 class HomePage extends StatelessWidget {
   final BoxConstraints constraints;
   final TextEditingController textController;
+  final UndoHistoryController? undoController;
+  final FocusNode? focusNode;
 
   const HomePage({
     super.key,
     required this.constraints,
     required this.textController,
+    this.undoController,
+    this.focusNode,
   });
 
   @override
@@ -29,6 +33,9 @@ class HomePage extends StatelessWidget {
         return ListView(
           children: [
             TextField(
+              undoController: undoController,
+              focusNode: focusNode,
+              autofocus: true,
               style: TextStyle(
                 fontSize: applicationTheme.fontSize,
                 fontFamily: applicationTheme.editorFont.family,
