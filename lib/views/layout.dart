@@ -65,6 +65,14 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
     _scheduleSession();
   }
 
+  void _showSessionMessage(String message) {
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    });
+  }
+
   Future<void> _restoreSession() async {
     String? originalData;
     try {
@@ -84,13 +92,9 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
             try { await sessionStore.preserve(data); }
             catch (_) { _recoveryPaused = true; }
           }
-          if (mounted && warnings.isNotEmpty) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(warnings.join('\n') + (_recoveryPaused
-                  ? '\nRecovery saving is paused because the original session could not be backed up.' : ''))),
-              );
-            });
+          if (warnings.isNotEmpty) {
+            _showSessionMessage(warnings.join('\n') + (_recoveryPaused
+              ? '\nRecovery saving is paused because the original session could not be backed up.' : ''));
           }
         }
       } else {
@@ -101,13 +105,9 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
         try { await sessionStore.preserve(originalData); }
         catch (_) { _recoveryPaused = true; }
       } else { _recoveryPaused = true; }
-      if (mounted) WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(_recoveryPaused
-            ? 'Recovery saving is paused because the previous session could not be backed up. Open documents are unchanged.'
-            : 'The previous session could not be restored. Its recovery data was backed up; a new document is ready.'),
-        ));
-      });
+      _showSessionMessage(_recoveryPaused
+        ? 'Recovery saving is paused because the previous session could not be backed up. Open documents are unchanged.'
+        : 'The previous session could not be restored. Its recovery data was backed up; a new document is ready.');
     } finally {
       if (mounted) {
         setState(() { _restoring = false; _busy = false; });
@@ -131,7 +131,7 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
 
   void _scheduleSession() {
     if (!_manageSession || !mounted || _restoring || _closing ||
-        _recoveryPaused && applicationTheme.restoreSession) return;
+        _recoveryPaused && applicationTheme.restoreSession) { return; }
     _sessionTimer?.cancel();
     _sessionTimer = Timer(const Duration(milliseconds: 300), () {
       unawaited(_queueSession().then((_) {

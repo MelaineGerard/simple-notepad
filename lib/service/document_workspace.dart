@@ -127,7 +127,7 @@ class DocumentWorkspace extends ChangeNotifier {
         final choice = await confirm(document);
         if (choice == UnsavedChoice.discard) discarded.add(document);
         return choice;
-      }, saveDocument: saveDocument)) return false;
+      }, saveDocument: saveDocument)) { return false; }
       approved[document] = document.revision;
     }
     // Earlier tabs may have changed while a later file was being saved.
