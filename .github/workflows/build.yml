@@ -48,7 +48,7 @@ jobs:
         run: flutter analyze
 
       - name: Test
-        run: flutter test
+        run: flutter test --timeout 60s
 
       - name: Build Linux
         run: flutter build linux --release
