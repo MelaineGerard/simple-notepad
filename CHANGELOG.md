@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Independent document tabs with separate text, paths, encodings and undo histories (#16).
+- Save / Discard / Cancel confirmation on tab close and window quit, including native window close requests (#18).
+- UTF-8, UTF-16 LE/BE, ISO-8859-1 and ASCII input/output with strict conversion and BOM detection (#17).
+- New tab/document, close-tab and quit shortcuts; dirty indicators in tabs and window title (#22).
+
+
 ## 0.2.0 — 2026-11-01
 
 ### Added

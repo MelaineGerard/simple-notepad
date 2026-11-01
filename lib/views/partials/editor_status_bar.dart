@@ -3,8 +3,9 @@ import 'package:simple_notepad/utils/document_statistics.dart';
 
 class EditorStatusBar extends StatefulWidget {
   final TextEditingController textController;
+  final Widget? trailing;
 
-  const EditorStatusBar({super.key, required this.textController});
+  const EditorStatusBar({super.key, required this.textController, this.trailing});
 
   @override
   State<EditorStatusBar> createState() => _EditorStatusBarState();
@@ -63,6 +64,7 @@ class _EditorStatusBarState extends State<EditorStatusBar> {
           spacing: 16,
           runSpacing: 4,
           children: [
+            if (widget.trailing != null) widget.trailing!,
             Text('Lines: ${_statistics.lines}', style: theme.textTheme.bodySmall),
             Text('Words: ${_statistics.words}', style: theme.textTheme.bodySmall),
             Text('Characters: ${_statistics.characters}',

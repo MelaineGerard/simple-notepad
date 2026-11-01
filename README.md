@@ -8,7 +8,9 @@ A clean, lightweight plain text editor for Linux — like Notepad, but for Linux
 
 ## Features
 
-- Open, save, and save-as any plain text file
+- Open, save, and save-as plain text files in independent tabs
+- Unsaved-change indicators and Save / Discard / Cancel prompts for tab and window closing
+- UTF-8, UTF-16 LE/BE, ISO-8859-1 and ASCII encodings; BOM detection on open
 - Print the current document
 - Dark mode toggle (persisted between sessions)
 - Live word, character and line counts
@@ -22,7 +24,10 @@ A clean, lightweight plain text editor for Linux — like Notepad, but for Linux
 
 | Action | Shortcut |
 |---|---|
+| New document / tab | Ctrl+N or Ctrl+T |
 | Open file | Ctrl+O |
+| Close active tab | Ctrl+W |
+| Quit with unsaved-change confirmation | Ctrl+Q |
 | Save | Ctrl+S |
 | Save as | Ctrl+Shift+S |
 | Print | Ctrl+P |
@@ -36,8 +41,11 @@ for mouse users. Switching modes or changing font preferences keeps the text,
 selection and undo history. Undo groups consecutive typing into native Flutter
 history entries; editing after undo clears the redo branch.
 
-New-file, search, tab and quit shortcuts will be added with their corresponding
-features.
+Use **Open with encoding** for legacy files. The status bar selects the encoding
+used for saving. Unsupported characters cause an error before any data is written.
+Closing a tab or the window offers Save, Discard and Cancel; cancelling a file
+picker or a failed write keeps the document open. Opening a file creates a tab;
+reopening an already-open file selects its tab.
 
 ## Installation
 

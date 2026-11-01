@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:simple_notepad/utils/config.dart';
 import 'package:simple_notepad/views/layout.dart';
 import 'package:yaru/yaru.dart';
+import 'package:window_manager/window_manager.dart';
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await YaruWindowTitleBar.ensureInitialized();
+  await windowManager.ensureInitialized();
+  await windowManager.setPreventClose(true);
   runApp(const SimpleNotepadApplication());
 }
 
