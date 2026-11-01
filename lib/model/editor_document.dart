@@ -9,6 +9,8 @@ class EditorDocument extends ChangeNotifier {
   final FocusNode focusNode = FocusNode();
   String? path;
   TextEncoding _encoding;
+  int revision = 0;
+  late String _lastText;
   bool _externalChange = false;
   String _savedText;
   TextEncoding _savedEncoding;
@@ -16,7 +18,8 @@ class EditorDocument extends ChangeNotifier {
   EditorDocument({String text = '', this.path, TextEncoding encoding = TextEncoding.utf8})
       : textController = TextEditingController(text: text),
         _encoding = encoding, _savedText = text, _savedEncoding = encoding {
-    textController.addListener(notifyListeners);
+    _lastText = text;
+    textController.addListener(_textChanged);
   }
 
   String get name => path == null ? 'Untitled' : path!.split(RegExp(r'[/\\]')).last;
@@ -25,10 +28,12 @@ class EditorDocument extends ChangeNotifier {
   set encoding(TextEncoding value) {
     if (_encoding == value) return;
     _encoding = value;
+    revision++;
     notifyListeners();
   }
 
   void markSaved(String savedText, TextEncoding savedEncoding, String savedPath) {
+    revision++;
     _externalChange = false;
     _savedText = savedText;
     _savedEncoding = savedEncoding;
@@ -38,12 +43,21 @@ class EditorDocument extends ChangeNotifier {
 
   void markExternalChange() {
     _externalChange = true;
+    revision++;
+    notifyListeners();
+  }
+
+  void _textChanged() {
+    if (textController.text != _lastText) {
+      _lastText = textController.text;
+      revision++;
+    }
     notifyListeners();
   }
 
   @override
   void dispose() {
-    textController.removeListener(notifyListeners);
+    textController.removeListener(_textChanged);
     textController.dispose();
     undoController.dispose();
     focusNode.dispose();

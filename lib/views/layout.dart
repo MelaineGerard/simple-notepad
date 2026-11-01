@@ -26,6 +26,7 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
   late final MenuService menuService = widget.menuService ?? MenuService();
   bool _focusMode = false;
   bool _busy = false;
+  bool _closing = false;
 
   @override
   void initState() {
@@ -45,6 +46,7 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
   }
 
   void _toggleFocusMode() {
+    if (_closing) return;
     setState(() => _focusMode = !_focusMode);
     _focusEditor();
   }
@@ -87,6 +89,54 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
     ) ?? UnsavedChoice.cancel;
   }
 
+  Future<bool> _saveDocument(EditorDocument document, {bool saveAs = false}) async {
+    String? name;
+    if (saveAs || document.path == null) {
+      var filename = document.path == null ? 'untitled.txt' : document.name;
+      name = await showDialog<String>(
+        context: context,
+        builder: (context) => StatefulBuilder(
+          builder: (context, setDialogState) => AlertDialog(
+            title: const Text('Save as'),
+            content: TextFormField(
+              initialValue: filename, autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'File name',
+                helperText: 'Choose the destination folder next.',
+              ),
+              onChanged: (value) => setDialogState(() => filename = value),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+              FilledButton(
+                onPressed: filename.trim().isEmpty ||
+                    filename == '.' || filename == '..' ||
+                    filename.contains('/') || filename.contains(r'\\') ||
+                    filename.contains(String.fromCharCode(0))
+                    ? null : () => Navigator.pop(context, filename),
+                child: const Text('Choose folder'),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (name == null) return false;
+    }
+    return workspace.save(document, saveAs: saveAs, fileName: name,
+      confirmOverwrite: (path) async => await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Replace existing file?'),
+          content: Text(path),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Replace')),
+          ],
+        ),
+      ) ?? false,
+    );
+  }
+
   Future<TextEncoding?> _chooseEncoding() {
     var selected = TextEncoding.utf8;
     return showDialog<TextEncoding>(
@@ -110,6 +160,7 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
   }
 
   void _command(String command) {
+    if (_closing) return;
     if (command == 'Focus mode') { _toggleFocusMode(); return; }
     if (command == 'Undo') { workspace.active.undoController.undo(); _focusEditor(); return; }
     if (command == 'Redo') { workspace.active.undoController.redo(); _focusEditor(); return; }
@@ -132,18 +183,24 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
           if (encoding != null) await workspace.open(encoding: encoding);
           break;
         case 'Save':
-          await workspace.save(document);
+          await _saveDocument(document);
           break;
         case 'Save as':
-          await workspace.save(document, saveAs: true);
+          await _saveDocument(document, saveAs: true);
           break;
         case 'Close tab':
-          await workspace.close(document, _confirm);
+          await workspace.close(document, _confirm, saveDocument: _saveDocument);
           break;
         case 'Quit':
-          if (await workspace.canQuit(_confirm)) {
-            if (widget.onQuit != null) { await widget.onQuit!(); }
-            else { await windowManager.destroy(); }
+          setState(() => _closing = true);
+          document.focusNode.unfocus();
+          try {
+            if (await workspace.canQuit(_confirm, saveDocument: _saveDocument)) {
+              if (widget.onQuit != null) { await widget.onQuit!(); }
+              else { await windowManager.destroy(); }
+            }
+          } finally {
+            if (mounted) setState(() => _closing = false);
           }
           break;
         default:
@@ -183,7 +240,9 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
         const SingleActivator(LogicalKeyboardKey.keyZ, control: true, shift: true): () => _command('Redo'),
         const SingleActivator(LogicalKeyboardKey.keyY, control: true): () => _command('Redo'),
       },
-      child: Scaffold(
+      child: AbsorbPointer(
+        absorbing: _closing,
+        child: Scaffold(
         appBar: _focusMode ? null : YaruWindowTitleBar(
           title: Text('${active.isDirty ? '• ' : ''}${active.name} — Simple Notepad'),
           onClose: (_) => _command('Quit'),
@@ -251,6 +310,7 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
             )),
           ),
         ]),
+        ),
       ),
     );
   }

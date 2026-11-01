@@ -16,9 +16,10 @@ class MemoryStore implements DocumentStore {
   @override
   Future<String?> pickSavePath(String name, Uint8List bytes) async {
     if (savePath == null) return null;
-    await write(savePath!, bytes);
     return savePath;
   }
+  @override
+  Future<bool> exists(String path) async => files.containsKey(path);
   @override
   Future<Uint8List> read(String path) async {
     final bytes = files[path];
@@ -105,6 +106,22 @@ void main() {
     expect(await saving, isTrue);
     expect(TextEncoding.utf8.decode(store.files['/file.txt']!), 'snapshot');
     expect(document.isDirty, isTrue);
+    workspace.dispose();
+  });
+
+  test('quit rechecks earlier tabs after another asynchronous save', () async {
+    final store = MemoryStore()..savePath = '/second.txt';
+    final workspace = DocumentWorkspace(store: store);
+    final first = workspace.active;
+    final second = workspace.newDocument()..textController.text = 'save me';
+    store.pendingWrite = Completer<void>();
+    final quitting = workspace.canQuit((_) async => UnsavedChoice.save);
+    await Future<void>.delayed(Duration.zero);
+    first.textController.text = 'typed during the later save';
+    store.pendingWrite!.complete();
+    expect(await quitting, isFalse);
+    expect(workspace.documents, [first, second]);
+    expect(first.isDirty, isTrue);
     workspace.dispose();
   });
 

@@ -61,18 +61,19 @@ class DocumentWorkspace extends ChangeNotifier {
     return document;
   }
 
-  Future<bool> save(EditorDocument document, {bool saveAs = false}) async {
+  Future<bool> save(EditorDocument document, {bool saveAs = false,
+      String? fileName, Future<bool> Function(String path)? confirmOverwrite}) async {
     final text = document.textController.text;
     final encoding = document.encoding;
     // Strict conversion happens before opening a picker or modifying a file.
     final bytes = encoding.encode(text);
     var path = document.path;
     if (saveAs || path == null) {
-      path = await store.pickSavePath(document.name == 'Untitled' ? 'untitled.txt' : document.name, bytes);
+      path = await store.pickSavePath(fileName ?? (document.name == 'Untitled' ? 'untitled.txt' : document.name), bytes);
       if (path == null) return false;
-    } else {
-      await store.write(path, bytes);
+      if (await store.exists(path) && (confirmOverwrite == null || !await confirmOverwrite(path))) return false;
     }
+    await store.write(path, bytes);
     for (final other in _documents) {
       if (other != document && other.path == path) other.markExternalChange();
     }
@@ -80,20 +81,23 @@ class DocumentWorkspace extends ChangeNotifier {
     return true;
   }
 
-  Future<bool> canClose(EditorDocument document, ConfirmUnsaved confirm) async {
+  Future<bool> canClose(EditorDocument document, ConfirmUnsaved confirm,
+      {Future<bool> Function(EditorDocument)? saveDocument}) async {
     if (!document.isDirty) return true;
+    final revision = document.revision;
     switch (await confirm(document)) {
       case UnsavedChoice.cancel:
         return false;
       case UnsavedChoice.discard:
-        return true;
+        return document.revision == revision;
       case UnsavedChoice.save:
-        return await save(document) && !document.isDirty;
+        return await (saveDocument?.call(document) ?? save(document)) && !document.isDirty;
     }
   }
 
-  Future<bool> close(EditorDocument document, ConfirmUnsaved confirm) async {
-    if (!await canClose(document, confirm)) return false;
+  Future<bool> close(EditorDocument document, ConfirmUnsaved confirm,
+      {Future<bool> Function(EditorDocument)? saveDocument}) async {
+    if (!await canClose(document, confirm, saveDocument: saveDocument)) return false;
     final index = _documents.indexOf(document);
     if (index < 0) return false;
     _documents.removeAt(index);
@@ -109,12 +113,17 @@ class DocumentWorkspace extends ChangeNotifier {
     return true;
   }
 
-  Future<bool> canQuit(ConfirmUnsaved confirm) async {
-    // Do not remove any tab until every prompt has been accepted.
-    for (final document in List<EditorDocument>.of(_documents)) {
-      if (!await canClose(document, confirm)) return false;
+  Future<bool> canQuit(ConfirmUnsaved confirm,
+      {Future<bool> Function(EditorDocument)? saveDocument}) async {
+    final documents = List<EditorDocument>.of(_documents);
+    final approved = <EditorDocument, int>{};
+    for (final document in documents) {
+      if (!await canClose(document, confirm, saveDocument: saveDocument)) return false;
+      approved[document] = document.revision;
     }
-    return true;
+    // Earlier tabs may have changed while a later file was being saved.
+    return listEquals(documents, _documents) &&
+        approved.entries.every((entry) => entry.key.revision == entry.value);
   }
 
   @override
