@@ -33,7 +33,9 @@ local recovery data after edits and flushes the final session before quitting.
 Existing files are reopened from disk; unsaved drafts are reapplied without
 writing to those files. Missing files produce a warning, and their drafts become
 unsaved tabs. Discarding a document explicitly removes its recovery draft.
-Disabling recovery clears the stored session. Undo history is session-local and
+Unrestorable recovery data is backed up separately before any replacement. If that
+backup fails, recovery saving pauses and leaves the original data untouched.
+Disabling recovery clears the stored session and its backups. Undo history is session-local and
 starts fresh after restarting the app.
 
 ## Keyboard shortcuts

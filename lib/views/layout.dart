@@ -42,6 +42,7 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
   Future<void> _sessionWrites = Future<void>.value();
   bool _restoring = false;
   bool _sessionWarningShown = false;
+  bool _recoveryPaused = false;
   bool _focusMode = false;
   bool _busy = false;
   bool _closing = false;
@@ -65,20 +66,29 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
   }
 
   Future<void> _restoreSession() async {
+    String? originalData;
     try {
       await applicationTheme.ready;
       if (!mounted) return;
       if (applicationTheme.restoreSession) {
         final data = await sessionStore.read();
+        originalData = data;
         if (!mounted) return;
         if (data != null) {
           final decoded = jsonDecode(data);
-          if (decoded is! Map<String, dynamic>) throw const FormatException('Invalid saved session');
+          if (decoded is! Map<String, dynamic> || decoded['version'] != 1 || decoded['documents'] is! List) {
+            throw const FormatException('Invalid saved session');
+          }
           final warnings = await workspace.restoreSession(decoded);
+          if (warnings.isNotEmpty) {
+            try { await sessionStore.preserve(data); }
+            catch (_) { _recoveryPaused = true; }
+          }
           if (mounted && warnings.isNotEmpty) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(warnings.join('\n'))),
+                SnackBar(content: Text(warnings.join('\n') + (_recoveryPaused
+                  ? '\nRecovery saving is paused because the original session could not be backed up.' : ''))),
               );
             });
           }
@@ -87,9 +97,15 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
         await sessionStore.write(null);
       }
     } catch (_) {
+      if (originalData != null) {
+        try { await sessionStore.preserve(originalData); }
+        catch (_) { _recoveryPaused = true; }
+      } else { _recoveryPaused = true; }
       if (mounted) WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('The previous session could not be restored. A new document is ready.'),
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(_recoveryPaused
+            ? 'Recovery saving is paused because the previous session could not be backed up. Open documents are unchanged.'
+            : 'The previous session could not be restored. Its recovery data was backed up; a new document is ready.'),
         ));
       });
     } finally {
@@ -102,15 +118,20 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
   }
 
   Future<void> _queueSession({bool quitting = false}) {
+    if (_recoveryPaused && applicationTheme.restoreSession) return Future<void>.value();
     final data = applicationTheme.restoreSession
         ? jsonEncode(workspace.exportSession(quitting: quitting)) : null;
-    final write = _sessionWrites.catchError((Object _) {}).then((_) => sessionStore.write(data));
+    final write = _sessionWrites.catchError((Object _) {}).then((_) async {
+      await sessionStore.write(data);
+      if (data == null) _recoveryPaused = false;
+    });
     _sessionWrites = write;
     return write;
   }
 
   void _scheduleSession() {
-    if (!_manageSession || !mounted || _restoring || _closing) return;
+    if (!_manageSession || !mounted || _restoring || _closing ||
+        _recoveryPaused && applicationTheme.restoreSession) return;
     _sessionTimer?.cancel();
     _sessionTimer = Timer(const Duration(milliseconds: 300), () {
       unawaited(_queueSession().then((_) {

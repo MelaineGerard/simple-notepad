@@ -16,8 +16,15 @@ import 'document_workspace_test.dart' show MemoryStore;
 class MemorySessionStore implements SessionStore {
   String? data;
   final List<String?> writes = [];
+  final List<String> backups = [];
+  bool failPreserve = false;
   Completer<void>? firstWrite;
   MemorySessionStore([this.data]);
+  @override
+  Future<void> preserve(String value) async {
+    if (failPreserve) throw StateError('Backup failed');
+    if (!backups.contains(value)) backups.add(value);
+  }
   @override
   Future<String?> read() async => data;
   @override
@@ -138,6 +145,63 @@ void main() {
     restored.dispose();
     settings.dispose();
   });
+
+  test('local recovery backup is deduplicated and cleared only by explicit opt-out', () async {
+    SharedPreferences.setMockInitialValues({});
+    final recovery = LocalSessionStore();
+    await recovery.preserve('original draft');
+    await recovery.preserve('original draft');
+    final preferences = await SharedPreferences.getInstance();
+    expect(preferences.getStringList(LocalSessionStore.backupsKey), ['original draft']);
+    await recovery.write(null);
+    expect(preferences.getStringList(LocalSessionStore.backupsKey), isNull);
+  });
+
+  for (final original in ['broken JSON containing my draft',
+      '{"version":999,"documents":[{"draft":"important future draft"}]}']) {
+    testWidgets('invalid recovery data is backed up before any replacement: $original',
+        (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.runAsync(() async {
+        applicationTheme = ApplicationTheme();
+        await applicationTheme.ready;
+      });
+      final workspace = DocumentWorkspace(store: MemoryStore());
+      final sessions = MemorySessionStore(original);
+      await tester.pumpWidget(MaterialApp(home: AppLayout(
+        workspace: workspace, sessionStore: sessions,
+      )));
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
+      expect(sessions.backups, contains(original));
+      await tester.pumpWidget(const SizedBox());
+      workspace.dispose();
+      applicationTheme.dispose();
+    }, timeout: const Timeout(Duration(seconds: 30)));
+  }
+
+  testWidgets('backup failure keeps original recovery data and pauses replacement',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await tester.runAsync(() async {
+      applicationTheme = ApplicationTheme();
+      await applicationTheme.ready;
+    });
+    final workspace = DocumentWorkspace(store: MemoryStore());
+    final sessions = MemorySessionStore('unreadable original')..failPreserve = true;
+    await tester.pumpWidget(MaterialApp(home: AppLayout(
+      workspace: workspace, sessionStore: sessions,
+    )));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'new editing still works');
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(sessions.data, 'unreadable original');
+    expect(sessions.writes, isEmpty);
+    await tester.pumpWidget(const SizedBox());
+    workspace.dispose();
+    applicationTheme.dispose();
+  }, timeout: const Timeout(Duration(seconds: 30)));
 
   testWidgets('disabled session restore clears old recovery data', (tester) async {
     SharedPreferences.setMockInitialValues({'restoreSession': false});
