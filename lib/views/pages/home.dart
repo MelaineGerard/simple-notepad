@@ -11,6 +11,7 @@ class HomePage extends StatefulWidget {
   final UndoHistoryController? undoController;
   final FocusNode? focusNode;
   final bool autofocus;
+  final bool readOnly;
 
   const HomePage({
     super.key,
@@ -19,6 +20,7 @@ class HomePage extends StatefulWidget {
     this.undoController,
     this.focusNode,
     this.autofocus = true,
+    this.readOnly = false,
   });
 
   @override
@@ -87,6 +89,7 @@ class _HomePageState extends State<HomePage> {
           undoController: widget.undoController,
           focusNode: widget.focusNode,
           autofocus: widget.autofocus,
+          readOnly: widget.readOnly,
           scrollController: _scrollController,
           expands: true,
           maxLines: null,

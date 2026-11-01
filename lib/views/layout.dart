@@ -1,9 +1,13 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:simple_notepad/model/editor_document.dart';
 import 'package:simple_notepad/service/document_workspace.dart';
 import 'package:simple_notepad/service/menu_service.dart';
 import 'package:simple_notepad/service/text_encoding.dart';
+import 'package:simple_notepad/service/session_store.dart';
+import 'package:simple_notepad/utils/config.dart';
 import 'package:simple_notepad/views/pages/home.dart';
 import 'package:simple_notepad/views/partials/appbar_actions.dart';
 import 'package:simple_notepad/views/partials/editor_status_bar.dart';
@@ -15,8 +19,9 @@ class AppLayout extends StatefulWidget {
   final MenuService? menuService;
   final DocumentWorkspace? workspace;
   final Future<void> Function()? onQuit;
+  final SessionStore? sessionStore;
 
-  const AppLayout({super.key, this.menuService, this.workspace, this.onQuit});
+  const AppLayout({super.key, this.menuService, this.workspace, this.onQuit, this.sessionStore});
 
   @override
   State<AppLayout> createState() => _AppLayoutState();
@@ -31,6 +36,12 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
   bool _showFind = false;
   bool _showReplace = false;
   bool _matchCase = false;
+  late final SessionStore sessionStore = widget.sessionStore ?? LocalSessionStore();
+  bool get _manageSession => widget.workspace == null || widget.sessionStore != null;
+  Timer? _sessionTimer;
+  Future<void> _sessionWrites = Future<void>.value();
+  bool _restoring = false;
+  bool _sessionWarningShown = false;
   bool _focusMode = false;
   bool _busy = false;
   bool _closing = false;
@@ -40,20 +51,95 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
     super.initState();
     workspace.addListener(_changed);
     windowManager.addListener(this);
+    applicationTheme.addListener(_scheduleSession);
+    if (_manageSession) {
+      _restoring = true;
+      _busy = true;
+      _restoreSession();
+    }
   }
 
   void _changed() {
     if (mounted) setState(() {});
+    _scheduleSession();
+  }
+
+  Future<void> _restoreSession() async {
+    try {
+      await applicationTheme.ready;
+      if (!mounted) return;
+      if (applicationTheme.restoreSession) {
+        final data = await sessionStore.read();
+        if (!mounted) return;
+        if (data != null) {
+          final decoded = jsonDecode(data);
+          if (decoded is! Map<String, dynamic>) throw const FormatException('Invalid saved session');
+          final warnings = await workspace.restoreSession(decoded);
+          if (mounted && warnings.isNotEmpty) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(warnings.join('\n'))),
+              );
+            });
+          }
+        }
+      } else {
+        await sessionStore.write(null);
+      }
+    } catch (_) {
+      if (mounted) WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('The previous session could not be restored. A new document is ready.'),
+        ));
+      });
+    } finally {
+      if (mounted) {
+        setState(() { _restoring = false; _busy = false; });
+        _scheduleSession();
+        _focusEditor();
+      }
+    }
+  }
+
+  Future<void> _queueSession({bool quitting = false}) {
+    final data = applicationTheme.restoreSession
+        ? jsonEncode(workspace.exportSession(quitting: quitting)) : null;
+    final write = _sessionWrites.catchError((Object _) {}).then((_) => sessionStore.write(data));
+    _sessionWrites = write;
+    return write;
+  }
+
+  void _scheduleSession() {
+    if (!_manageSession || !mounted || _restoring || _closing) return;
+    _sessionTimer?.cancel();
+    _sessionTimer = Timer(const Duration(milliseconds: 300), () {
+      unawaited(_queueSession().then((_) {
+        _sessionWarningShown = false;
+      }).catchError((Object _) {
+        if (mounted && !_sessionWarningShown) {
+          _sessionWarningShown = true;
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Session recovery could not be saved. Your open documents are unchanged.'),
+          ));
+        }
+      }));
+    });
+  }
+
+  Future<void> _flushSessionForQuit() async {
+    if (!_manageSession) return;
+    _sessionTimer?.cancel();
+    await _queueSession(quitting: true);
   }
 
   void _focusEditor() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) workspace.active.focusNode.requestFocus();
+      if (mounted && !_closing && !_restoring) workspace.active.focusNode.requestFocus();
     });
   }
 
   void _toggleFocusMode() {
-    if (_closing) return;
+    if (_closing || _restoring) return;
     if (!_focusMode) _closeFind();
     setState(() => _focusMode = !_focusMode);
     _focusEditor();
@@ -237,6 +323,7 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
           document.focusNode.unfocus();
           try {
             if (await workspace.canQuit(_confirm, saveDocument: _saveDocument)) {
+              await _flushSessionForQuit();
               if (widget.onQuit != null) { await widget.onQuit!(); }
               else { await windowManager.destroy(); }
             }
@@ -255,6 +342,8 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
 
   @override
   void dispose() {
+    _sessionTimer?.cancel();
+    applicationTheme.removeListener(_scheduleSession);
     _findController.dispose();
     _replaceController.dispose();
     _findFocus.dispose();
@@ -287,7 +376,7 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
         const SingleActivator(LogicalKeyboardKey.keyY, control: true): () => _command('Redo'),
       },
       child: AbsorbPointer(
-        absorbing: _closing,
+        absorbing: _closing || _restoring,
         child: Scaffold(
         appBar: _focusMode ? null : YaruWindowTitleBar(
           title: Text('${active.isDirty ? '• ' : ''}${active.name} — Simple Notepad'),
@@ -310,6 +399,7 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
           ),
         ),
         body: Column(children: [
+          if (_restoring) const LinearProgressIndicator(semanticsLabel: 'Restoring previous session'),
           if (_focusMode)
             Align(alignment: Alignment.centerRight, child: IconButton(
               tooltip: 'Exit focus mode (Esc)', onPressed: _toggleFocusMode,
@@ -359,7 +449,8 @@ class _AppLayoutState extends State<AppLayout> with WindowListener {
                     textController: document.textController,
                     undoController: document.undoController,
                     focusNode: document.focusNode,
-                    autofocus: document == active,
+                    autofocus: document == active && !_restoring,
+                    readOnly: _restoring || _closing,
                   ),
               ],
             )),

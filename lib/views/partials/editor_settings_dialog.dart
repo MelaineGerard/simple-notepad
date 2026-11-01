@@ -49,6 +49,14 @@ class EditorSettingsDialog extends StatelessWidget {
                 onChanged: settings.changeSyntaxHighlighting,
               ),
               const SizedBox(height: 16),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Restore previous session'),
+                subtitle: const Text('Reopen tabs and recover unsaved drafts on startup'),
+                value: settings.restoreSession,
+                onChanged: settings.changeRestoreSession,
+              ),
+              const SizedBox(height: 16),
               Text('Font size: ${settings.fontSize.round()}'),
               Slider(
                 value: settings.fontSize,

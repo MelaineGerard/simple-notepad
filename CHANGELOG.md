@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Restore tabs, active document, cursor positions, encodings and recoverable drafts at startup; warn about missing files and allow disabling recovery (#25).
+- Serialize recovery writes and flush before quit; explicitly discarded edits are excluded from the final session.
+
 - Find / Replace panel with literal matching, navigation, match-case and replacement of one/all occurrences in the active tab (#13).
 - Extension-based basic syntax highlighting with plain-text fallback and a persistent opt-out (#19).
 - Complete common keyboard shortcut set, including Ctrl+F and Ctrl+H (#22).
