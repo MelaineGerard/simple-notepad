@@ -58,7 +58,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev ruby ruby-dev libfuse2t64 rpm xvfb dbus-x11 libgl1-mesa-dri
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev ruby ruby-dev libfuse2t64 rpm xvfb dbus-x11 libgl1-mesa-dri gsettings-desktop-schemas
 
       - name: Install fpm
         run: sudo gem install fpm
@@ -139,6 +139,8 @@ jobs:
             --category Utility \
             --license MIT \
             --deb-no-default-config-files \
+            --depends libgtk-3-0 \
+            --depends gsettings-desktop-schemas \
             "build/linux/${{ matrix.flutter_arch }}/release/bundle/=/opt/simple-notepad/" \
             "packaging/simple-notepad=/usr/bin/simple-notepad" \
             "packaging/simple-notepad.desktop=/usr/share/applications/simple-notepad.desktop" \
@@ -149,6 +151,8 @@ jobs:
       - name: Create rpm package
         run: |
           fpm -s dir -t rpm \
+            --depends gtk3 \
+            --depends gsettings-desktop-schemas \
             -n simple-notepad \
             -a "${{ matrix.arch }}" \
             -v "${{ steps.version.outputs.version }}" \
