@@ -15,6 +15,7 @@ class ApplicationTheme with ChangeNotifier {
   bool _darkMode = ThemeMode.system == ThemeMode.dark;
   double _fontSize = 14;
   EditorFont _editorFont = EditorFont.system;
+  bool _syntaxHighlighting = true;
   late final Future<void> ready;
 
   ApplicationTheme() {
@@ -25,6 +26,7 @@ class ApplicationTheme with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     _darkMode = prefs.getBool('darkMode') ?? ThemeMode.system == ThemeMode.dark;
     _fontSize = prefs.getDouble('fontSize') ?? 14;
+    _syntaxHighlighting = prefs.getBool('syntaxHighlighting') ?? true;
     final savedFont = prefs.getString('editorFont');
     _editorFont = EditorFont.values.firstWhere(
       (font) => font.name == savedFont,
@@ -38,6 +40,7 @@ class ApplicationTheme with ChangeNotifier {
     await prefs.setBool('darkMode', _darkMode);
     await prefs.setDouble('fontSize', _fontSize);
     await prefs.setString('editorFont', _editorFont.name);
+    await prefs.setBool('syntaxHighlighting', _syntaxHighlighting);
   }
 
   ThemeMode currentTheme() => _darkMode ? ThemeMode.dark : ThemeMode.light;
@@ -45,6 +48,14 @@ class ApplicationTheme with ChangeNotifier {
   bool get darkMode => _darkMode;
   double get fontSize => _fontSize;
   EditorFont get editorFont => _editorFont;
+  bool get syntaxHighlighting => _syntaxHighlighting;
+
+  Future<void> changeSyntaxHighlighting(bool enabled) async {
+    await ready;
+    _syntaxHighlighting = enabled;
+    notifyListeners();
+    await _saveTheme();
+  }
 
   Future<void> toggleTheme() async {
     await ready;

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Find / Replace panel with literal matching, navigation, match-case and replacement of one/all occurrences in the active tab (#13).
+- Extension-based basic syntax highlighting with plain-text fallback and a persistent opt-out (#19).
+- Complete common keyboard shortcut set, including Ctrl+F and Ctrl+H (#22).
+
 - Independent document tabs with separate text, paths, encodings and undo histories (#16).
 - Save / Discard / Cancel confirmation on tab close and window quit, including native window close requests (#18).
 - UTF-8, UTF-16 LE/BE, ISO-8859-1 and ASCII input/output with strict conversion and BOM detection (#17).

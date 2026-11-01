@@ -41,6 +41,14 @@ class EditorSettingsDialog extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 16),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Syntax highlighting'),
+                subtitle: const Text('Based on the file extension'),
+                value: settings.syntaxHighlighting,
+                onChanged: settings.changeSyntaxHighlighting,
+              ),
+              const SizedBox(height: 16),
               Text('Font size: ${settings.fontSize.round()}'),
               Slider(
                 value: settings.fontSize,
