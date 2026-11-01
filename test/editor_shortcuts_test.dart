@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'helpers/pump_editor.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -40,7 +41,7 @@ void main() {
   testWidgets('focus mode supports both shortcuts, Escape and mouse exit',
       (tester) async {
     await tester.pumpWidget(const MaterialApp(home: AppLayout()));
-    await tester.pumpAndSettle();
+    await pumpEditorReady(tester);
     await tester.enterText(find.byType(TextField), 'Keep this document');
     final controller = tester.widget<TextField>(find.byType(TextField)).controller!;
     controller.selection = const TextSelection(baseOffset: 5, extentOffset: 9);
@@ -63,7 +64,7 @@ void main() {
       (tester) async {
     final menu = RecordingMenuService();
     await tester.pumpWidget(MaterialApp(home: AppLayout(menuService: menu)));
-    await tester.pumpAndSettle();
+    await pumpEditorReady(tester);
     await tester.enterText(find.byType(TextField), 'unchanged');
     await shortcut(tester, LogicalKeyboardKey.keyO, control: true);
     await shortcut(tester, LogicalKeyboardKey.keyS, control: true);
@@ -78,7 +79,7 @@ void main() {
   testWidgets('undo redo survives mode and font changes; edits clear redo',
       (tester) async {
     await tester.pumpWidget(const MaterialApp(home: AppLayout()));
-    await tester.pumpAndSettle();
+    await pumpEditorReady(tester);
     final field = find.byType(TextField);
     await tester.enterText(field, 'one');
     await tester.pump(const Duration(milliseconds: 600));
@@ -103,7 +104,7 @@ void main() {
     expect(tester.widget<TextField>(field).controller!.text, 'different');
     await shortcut(tester, LogicalKeyboardKey.escape);
     await tester.tap(find.byTooltip('Menu'));
-    await tester.pumpAndSettle();
+    await pumpEditorReady(tester);
     final redo = tester.widget<PopupMenuItem<String>>(
       find.ancestor(of: find.text('Redo'), matching: find.byType(PopupMenuItem<String>)),
     );

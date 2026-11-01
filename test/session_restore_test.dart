@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'helpers/pump_editor.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -170,9 +171,9 @@ void main() {
       await tester.pumpWidget(MaterialApp(home: AppLayout(
         workspace: workspace, sessionStore: sessions,
       )));
-      await tester.pumpAndSettle();
+      await pumpEditorReady(tester);
       await tester.pump(const Duration(milliseconds: 400));
-      await tester.pumpAndSettle();
+      await pumpEditorReady(tester);
       expect(sessions.backups, contains(original));
       await tester.pumpWidget(const SizedBox());
       workspace.dispose();
@@ -192,7 +193,7 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: AppLayout(
       workspace: workspace, sessionStore: sessions,
     )));
-    await tester.pumpAndSettle();
+    await pumpEditorReady(tester);
     await tester.enterText(find.byType(TextField), 'new editing still works');
     await tester.pump(const Duration(milliseconds: 400));
     expect(sessions.data, 'unreadable original');
@@ -211,7 +212,7 @@ void main() {
     final workspace = DocumentWorkspace(store: MemoryStore());
     final sessions = MemorySessionStore('previous data');
     await tester.pumpWidget(MaterialApp(home: AppLayout(workspace: workspace, sessionStore: sessions)));
-    await tester.pumpAndSettle();
+    await pumpEditorReady(tester);
     expect(sessions.data, isNull);
     expect(workspace.active.textController.text, '');
     await tester.pumpWidget(const SizedBox());
@@ -231,14 +232,14 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: AppLayout(
       workspace: workspace, sessionStore: sessions, onQuit: () async { quit = true; },
     )));
-    await tester.pumpAndSettle();
+    await pumpEditorReady(tester);
     await tester.enterText(find.byType(TextField), 'discard me');
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyQ);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-    await tester.pumpAndSettle();
+    await pumpEditorReady(tester);
     await tester.tap(find.text('Discard'));
-    await tester.pumpAndSettle();
+    await pumpEditorReady(tester);
     expect(quit, isTrue);
     expect(jsonDecode(sessions.data!)['documents'], isEmpty);
     await tester.pumpWidget(const SizedBox());
@@ -255,13 +256,13 @@ void main() {
     final workspace = DocumentWorkspace(store: MemoryStore());
     final sessions = MemorySessionStore()..firstWrite = Completer<void>();
     await tester.pumpWidget(MaterialApp(home: AppLayout(workspace: workspace, sessionStore: sessions)));
-    await tester.pumpAndSettle();
+    await pumpEditorReady(tester);
     await tester.enterText(find.byType(TextField), 'first');
     await tester.pump(const Duration(milliseconds: 400));
     await tester.enterText(find.byType(TextField), 'latest');
     await tester.pump(const Duration(milliseconds: 400));
     sessions.firstWrite!.complete();
-    await tester.pumpAndSettle();
+    await pumpEditorReady(tester);
     expect(jsonDecode(sessions.data!)['documents'][0]['draft'], 'latest');
     expect(sessions.writes.length, greaterThanOrEqualTo(2));
     await tester.pumpWidget(const SizedBox());
