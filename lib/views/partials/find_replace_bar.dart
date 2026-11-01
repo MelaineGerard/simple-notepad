@@ -32,6 +32,7 @@ class FindReplaceBar extends StatelessWidget {
               controller: findController, focusNode: findFocus,
               decoration: const InputDecoration(labelText: 'Find', isDense: true),
               onChanged: onQueryChanged,
+              onEditingComplete: () {},
               onSubmitted: (_) => document.selectMatch(),
             )),
             Text('${document.selectedMatch + 1} of ${matches.length}',
